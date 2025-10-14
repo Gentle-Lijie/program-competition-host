@@ -106,14 +106,17 @@
         .qrcode {
             width: 110px;
             height: 110px;
-            background-color: white;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            /* no white background, keep transparent */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            display:flex; align-items:center; justify-content:center;
+            background: transparent;
         }
-        .qrcode img {
+        .qrcode img, .qrcode svg {
             width: 100%;
             height: 100%;
+            display:block;
         }
         .qrcode-label {
             font-size: 12px;
@@ -188,7 +191,7 @@
         
         <div class="qrcode-container">
             <div class="qrcode">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=https://github.com/Gentle-Lijie/program-competition-host" alt="仓库二维码">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=https://github.com/Gentle-Lijie/program-competition-host&format=svg&color=2ecc71&bgcolor=transparent" alt="仓库二维码">
             </div>
             <div class="qrcode-label">扫码访问仓库</div>
         </div>
