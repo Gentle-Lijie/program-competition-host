@@ -14,5 +14,6 @@ try {
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    error_log('score_api error: ' . $e->getMessage());
+    echo json_encode(['error' => 'Internal server error']);
 }

@@ -10,5 +10,6 @@ try {
     echo json_encode($rows);
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    error_log('admin_programs_api error: ' . $e->getMessage());
+    echo json_encode(['error' => 'Internal server error']);
 }

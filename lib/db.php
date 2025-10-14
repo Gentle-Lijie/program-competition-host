@@ -17,8 +17,13 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 } catch (PDOException $e) {
+    // 在开发环境中显示详细错误，通过环境变量 SHOW_PDO_ERRORS=1 控制
     http_response_code(500);
-    die('Database connection failed: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'));
+    if (getenv('SHOW_PDO_ERRORS')) {
+        die('Database connection failed: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'));
+    }
+    error_log('Database connection failed: ' . $e->getMessage());
+    die('Database connection failed. Check server logs.');
 }
 
 // 设置时区

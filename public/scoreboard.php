@@ -91,9 +91,21 @@ async function loadScores() {
         tbody.innerHTML = '';
         data.forEach(row => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${row.name}</td>` +
-                           `<td class="performer">${row.performer}</td>` +
-                           `<td class="score">${row.score}</td>`;
+
+            const tdName = document.createElement('td');
+            tdName.textContent = row.name;
+
+            const tdPerformer = document.createElement('td');
+            tdPerformer.className = 'performer';
+            tdPerformer.textContent = row.performer;
+
+            const tdScore = document.createElement('td');
+            tdScore.className = 'score';
+            tdScore.textContent = row.score;
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdPerformer);
+            tr.appendChild(tdScore);
             tbody.appendChild(tr);
         });
     } catch (err) {

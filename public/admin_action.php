@@ -1,7 +1,16 @@
 <?php
 require_once __DIR__ . '/../lib/helpers.php';
 
+// 验证 CSRF token
+if (session_status() === PHP_SESSION_NONE) session_start();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfPost = $_POST['csrf_token'] ?? '';
+    $csrfSession = $_SESSION['csrf_token'] ?? '';
+    if (!hash_equals($csrfSession, $csrfPost)) {
+        http_response_code(403);
+        die('Forbidden: invalid CSRF token');
+    }
     $action = $_POST['action'] ?? '';
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 

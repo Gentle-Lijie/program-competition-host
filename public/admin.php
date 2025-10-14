@@ -1,6 +1,16 @@
 <?php
+$require_once = null;
 require_once __DIR__ . '/../lib/helpers.php';
+// 启用 session 用于 CSRF token
+if (session_status() === PHP_SESSION_NONE) session_start();
+
 $programs = fetchAllPrograms($pdo);
+
+// 生成一次性的 CSRF token（如果不存在）
+if (empty($_SESSION['csrf_token'])) {
+  $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
+}
+$csrf = $_SESSION['csrf_token'];
 ?>
 <!doctype html>
 <html lang="zh-CN">
@@ -54,6 +64,7 @@ $programs = fetchAllPrograms($pdo);
     <?php foreach ($programs as $p): ?>
       <tr class="<?= (new DateTime($p['start_time']))->format('Y-m-d H:i') <= (new DateTime())->format('Y-m-d H:i') && (new DateTime($p['start_time']))->format('Y-m-d H:i') > (new DateTime())->format('Y-m-d H:i') ? 'highlight' : '' ?>">
         <form method="post" action="admin_action.php">
+          <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
           <td><?= (int)$p['id'] ?><input type="hidden" name="id" value="<?= (int)$p['id'] ?>"></td>
           <td><input type="datetime-local" name="start_time" value="<?= h((new DateTime($p['start_time']))->format('Y-m-d\\TH:i')) ?>"></td>
           <td><input type="text" name="name" value="<?= h($p['name']) ?>"></td>

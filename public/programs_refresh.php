@@ -1,18 +1,19 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
+// programs_refresh.php - 返回当前/下一个节目栏的 HTML 段
+// 注意：不要在生产环境下开启 display_errors，会泄露敏感信息。
 require_once __DIR__ . '/../lib/helpers.php';
 
 $programs = fetchAllPrograms($pdo);
 if (!is_array($programs)) {
-    echo "Error: fetchAllPrograms() did not return an array.";
-    exit;
+  error_log('programs_refresh: fetchAllPrograms() did not return an array.');
+  echo '<div class="program-bar">无法加载节目</div>';
+  exit;
 }
 
 // 按时间升序排序
-usort($programs, fn($a, $b) => strtotime($a['start_time']) <=> strtotime($b['start_time']));
+usort($programs, function($a, $b) {
+  return strtotime($a['start_time']) <=> strtotime($b['start_time']);
+});
 
 $now = time();
 $current = null;
