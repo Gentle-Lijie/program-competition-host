@@ -1,0 +1,8 @@
+# Ignore local config and common OS/editor files
+config/local.php
+.env
+/.idea
+.vscode
+*.log
+vendor/
+node_modules/

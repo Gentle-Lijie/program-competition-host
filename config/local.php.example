@@ -1,0 +1,13 @@
+<?php
+// Copy this file to config/local.php and edit the values. This file is gitignored.
+return [
+    'db' => [
+        'host' => '127.0.0.1',
+        'port' => 3306,
+        'dbname' => 'program_schedule',
+        'user' => 'root',
+        'pass' => 'your_strong_password_here',
+        'charset' => 'utf8mb4',
+    ],
+    'timezone' => 'Asia/Shanghai',
+];
