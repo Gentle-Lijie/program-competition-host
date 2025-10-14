@@ -37,9 +37,14 @@
             font-size: 16px;
             line-height: 1.6;
             margin-bottom: 20px;
-            padding-right: 120px;
+            padding-right: 140px;
             font-weight: 400;
             letter-spacing: 0.5px;
+        }
+        /* 限制左侧主内容宽度，避免与右侧二维码重合 */
+        .content-left {
+            max-width: calc(100% - 180px);
+            box-sizing: border-box;
         }
         .stats-container {
             display: flex;
@@ -48,14 +53,15 @@
             padding-right: 120px;
         }
         .stat-box {
-            background-color: rgba(0,0,0,0.12);
+            /* 采用半透明白以保证可读性，同时使用强调色边框 */
+            background-color: rgba(255,255,255,0.08);
             padding: 12px 15px;
             border-radius: 14px;
             text-align: center;
             width: 28%;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
             margin: 0 2%;
-            backdrop-filter: blur(4px);
+            border: 1px solid rgba(46,204,113,0.14); /* use green emphasis */
         }
         .stat-box:first-child {
             margin-left: 0;
@@ -80,16 +86,19 @@
             display: flex;
             flex-wrap: wrap;
             margin-bottom: 15px;
-            padding-right: 120px;
+            padding-right: 140px;
         }
         .tech-tag {
-            background-color: rgba(255,255,255,0.2);
+            /* 使用强调色为主体，白字 */
+            background-color: rgba(46,204,113,0.18);
+            color: #ffffff;
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 14px;
             margin-right: 10px;
             margin-bottom: 10px;
             letter-spacing: 0.3px;
+            border: 1px solid rgba(46,204,113,0.28);
         }
         .last-activity {
             font-size: 14px;
@@ -160,33 +169,35 @@
             <h1>program-competition-host</h1>
         </div>
         
-        <div class="description">
-            一个用于管理节目日程与计分的轻量 PHP 应用，包含后台管理、计分 API 与大屏展示页面，适合校园/社团/小型演出场景快速部署。
-        </div>
-        
-        <div class="stats-container">
-            <div class="stat-box">
-                <div class="stat-title">代码行数</div>
-                <div class="stat-value">2024</div>
+        <div class="content-left">
+            <div class="description">
+                一个用于管理节目日程与计分的轻量 PHP 应用，包含后台管理、计分 API 与大屏展示页面，适合校园/社团/小型演出场景快速部署。
             </div>
-            <div class="stat-box">
-                <div class="stat-title">提交次数</div>
-                <div class="stat-value">7</div>
+
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-title">代码行数</div>
+                    <div class="stat-value">2024</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">提交次数</div>
+                    <div class="stat-value">7</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-title">文件数</div>
+                    <div class="stat-value">36</div>
+                </div>
             </div>
-            <div class="stat-box">
-                <div class="stat-title">文件数</div>
-                <div class="stat-value">36</div>
+
+            <div class="tech-stack">
+                <span class="tech-tag">PHP</span>
+                <span class="tech-tag">MySQL / MariaDB</span>
+                <span class="tech-tag">Nginx</span>
             </div>
-        </div>
-        
-        <div class="tech-stack">
-            <span class="tech-tag">PHP</span>
-            <span class="tech-tag">MySQL / MariaDB</span>
-            <span class="tech-tag">Nginx</span>
-        </div>
-        
-        <div class="last-activity">
-            最近更新: 2025-10-14T17:48:57+08:00 · 主要语言: PHP
+
+            <div class="last-activity">
+                最近更新: 2025-10-14T17:48:57+08:00 · 主要语言: PHP
+            </div>
         </div>
         
         <div class="qrcode-container">
