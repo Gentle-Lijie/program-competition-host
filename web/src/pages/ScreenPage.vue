@@ -1,31 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoute } from 'vue-router';
-import QrPanel from '@/components/QrPanel.vue';
-import CheckinBadge from '@/components/CheckinBadge.vue';
 import { api } from '@/lib/api';
 import { computeCurrentNext, type Program } from '@/lib/programState';
 import { usePolling } from '@/composables/usePolling';
 import { useNow } from '@/composables/useNow';
 
-// 大屏唯一入口：基于 WONDERFUL_US.html 原版设计，动态呈现节目单
-// 背景可切换：默认白色；?bg=transparent 真透明（OBS 合成）；?bg=original 原版黄绿背景
-const route = useRoute();
-const bgMode = computed(() => {
-  const v = String(route.query.bg ?? 'white').toLowerCase();
-  return v === 'transparent' || v === 'original' ? v : 'white';
-});
-
+// 大屏唯一入口：基于 WONDERFUL_US.html 原版设计，动态呈现节目单（严格还原，背景固定原版）
 const programs = usePolling<Program[]>(() => api('/api/programs'), 10_000);
-const count = usePolling<{ count: number }>(() => api('/api/checkin/count'), 8_000);
-const code = usePolling<{ code: string }>(() => api('/api/checkin/code'), 60_000);
 
 const now = useNow();
 const currentId = computed(
   () => computeCurrentNext(programs.data ?? [], now.value).current?.id ?? null,
-);
-const checkinUrl = computed(
-  () => `${location.origin}/checkin?code=${code.data?.code ?? ''}`,
 );
 
 function hhmm(p: Program) {
@@ -34,7 +19,7 @@ function hhmm(p: Program) {
 </script>
 
 <template>
-  <main class="slide" :class="`slide--${bgMode}`" aria-label="WONDERFUL US 节目单">
+  <main class="slide" aria-label="WONDERFUL US 节目单">
     <div class="panel">
       <!-- 节目行在面板内部滚动 -->
       <div class="rows">
@@ -56,12 +41,6 @@ function hhmm(p: Program) {
 
     <h1 class="title">WONDERFUL US</h1>
     <div class="program-label">节目单</div>
-
-    <!-- 右侧：签到二维码 + 实时人数 -->
-    <div class="side">
-      <QrPanel :url="checkinUrl" />
-      <CheckinBadge :count="count.data?.count ?? 0" />
-    </div>
   </main>
 </template>
 
@@ -71,11 +50,7 @@ body:has(.slide) {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #fff;
-}
-/* 透明模式：整页真透明，供 OBS 浏览器源合成 */
-body:has(.slide--transparent) {
-  background: transparent;
+  background: #111;
 }
 </style>
 
@@ -88,12 +63,7 @@ body:has(.slide--transparent) {
   container-type: size;
   background: #fff;
   isolation: isolate;
-}
-.slide--original {
   background: url('/assets/WONDERFUL_US_background.png') center / 100% 100% no-repeat;
-}
-.slide--transparent {
-  background: transparent;
 }
 
 .panel {
@@ -230,41 +200,5 @@ body:has(.slide--transparent) {
   font-family: 'Wonderful Chinese Black', sans-serif;
   font-size: 3cqw;
   color: rgba(0, 83, 0, 0.5);
-}
-
-/* ===== 右侧签到区 ===== */
-.side {
-  position: absolute;
-  z-index: 5;
-  right: 1.6%;
-  top: 23%;
-  width: 12.5%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.6cqh;
-}
-.side :deep(.qr-panel) {
-  width: 100%;
-  padding: 5% 6% 3%;
-  border-radius: 1.2cqw;
-}
-.side :deep(.qr-panel img) {
-  width: 100%;
-  height: auto;
-}
-.side :deep(.qr-panel__caption) {
-  font-size: 1.7cqw;
-}
-.side :deep(.checkin-badge) {
-  padding: 4% 9%;
-  border-radius: 99px;
-}
-.side :deep(.checkin-badge__label),
-.side :deep(.checkin-badge__unit) {
-  font-size: 1.4cqw;
-}
-.side :deep(.checkin-badge__count) {
-  font-size: 2.4cqw;
 }
 </style>
