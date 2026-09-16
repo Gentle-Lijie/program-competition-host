@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [vue(), tailwindcss()],
+    // .env 放仓库根（与后端共用），VITE_API_BASE_URL 在此注入客户端代码
+    envDir: path.resolve(__dirname, '..'),
     resolve: {
       alias: { '@': path.resolve(__dirname, 'src') },
     },

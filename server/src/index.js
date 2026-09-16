@@ -19,6 +19,28 @@ app.disable('x-powered-by');
 app.set('trust proxy', true); // 用户会反代（HTTPS），取 X-Forwarded-For 作为 req.ip
 app.use(express.json({ limit: '1mb' }));
 
+// CORS：前端单独托管（如 EdgeOne Pages）时，用 CORS_ORIGIN 指定允许的前端源（逗号分隔；* 表示放开所有）
+app.use('/api', (req, res, next) => {
+  const allowed = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const origin = req.headers.origin;
+  if (allowed.includes('*')) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  } else if (origin && allowed.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  } else {
+    return next(); // 未配置或不匹配：不加 CORS 头
+  }
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  if (req.method === 'OPTIONS') return res.sendStatus(204); // 预检
+  next();
+});
+
 // API
 app.use('/api', programsRouter);
 app.use('/api', checkinRouter);
