@@ -3,7 +3,7 @@ import { db } from '../db.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { getCodeInfo, touchCode, getRotationSeconds } from '../codeRotation.js';
 import { getGeofence, getMessages } from './checkin.js';
-import { classesOfProgram } from './performers.js';
+import { normalizeClassGroup } from './performers.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireAdmin);
@@ -19,8 +19,8 @@ adminRouter.get('/programs/full', (req, res) => {
   const all = db.prepare('SELECT class, arrived FROM performers').all();
 
   const res1 = programs.map((p) => {
-    const classes = classesOfProgram(p.performer);
-    const roster = all.filter((f) => classes.includes(f.class));
+    const key = normalizeClassGroup(p.performer);
+    const roster = all.filter((f) => normalizeClassGroup(f.class) === key);
     return {
       ...p,
       roster_total: roster.length,

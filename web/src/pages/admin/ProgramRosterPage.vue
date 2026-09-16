@@ -28,21 +28,13 @@ const performers = ref<Performer[]>([]);
 const search = ref('');
 const message = ref('');
 
-// 节目表演者字段 → 班级列表（"BDMA2601+MS2601" → 两个班）
-function classesOf(performer: string): string[] {
-  return performer.split(/[+\s、，,]+/).map((s) => s.trim()).filter(Boolean);
-}
-
 async function load() {
   const all = await api<{ id: number; name: string; performer: string; start_time: string }[]>(
     '/api/admin/programs/full',
   );
   program.value = all.find((p) => p.id === programId) ?? null;
   if (program.value) {
-    const classes = classesOf(program.value.performer);
-    performers.value = classes.length
-      ? await api(`/api/admin/performers?classes=${encodeURIComponent(classes.join(','))}`)
-      : [];
+    performers.value = await api(`/api/admin/performers?program_id=${programId}`);
   }
 }
 onMounted(load);
@@ -129,8 +121,7 @@ async function remove(p: Performer) {
 }
 
 async function clearRoster() {
-  const classes = program.value ? classesOf(program.value.performer).join('、') : '';
-  if (!confirm(`确定删除班级 ${classes} 的全部名单？这是全局删除，其他节目也会受影响`)) return;
+  if (!confirm(`确定删除「${program.value?.performer}」对应班级的全部名单？这是全局删除，其他节目也会受影响`)) return;
   await api(`/api/admin/performers/program/${programId}`, { method: 'DELETE' });
   await load();
 }
