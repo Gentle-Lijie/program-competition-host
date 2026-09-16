@@ -4,17 +4,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import FileSelect from '@/components/FileSelect.vue';
-import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { api } from '@/lib/api';
-import { parseRosterCsvFile, type RosterRow } from '@/lib/csv';
 
-// 单个节目的表演者签到页：普通表格，按班级分组，行内「签到/取消」，名单在本页导入
+// 单个节目的表演者签到页：按「表演者=班级代码」从全局名单匹配，班级分组表格逐个签到
 interface Performer {
   id: number;
   class: string;
@@ -33,16 +28,22 @@ const performers = ref<Performer[]>([]);
 const search = ref('');
 const message = ref('');
 
-// 导入对话框
-const importing = ref(false);
-const csvPreview = ref<{ rows: RosterRow[]; errors: { line: number; message: string }[] } | null>(null);
+// 节目表演者字段 → 班级列表（"BDMA2601+MS2601" → 两个班）
+function classesOf(performer: string): string[] {
+  return performer.split(/[+\s、，,]+/).map((s) => s.trim()).filter(Boolean);
+}
 
 async function load() {
   const all = await api<{ id: number; name: string; performer: string; start_time: string }[]>(
     '/api/admin/programs/full',
   );
   program.value = all.find((p) => p.id === programId) ?? null;
-  performers.value = await api(`/api/admin/performers?program_id=${programId}`);
+  if (program.value) {
+    const classes = classesOf(program.value.performer);
+    performers.value = classes.length
+      ? await api(`/api/admin/performers?classes=${encodeURIComponent(classes.join(','))}`)
+      : [];
+  }
 }
 onMounted(load);
 
@@ -128,29 +129,10 @@ async function remove(p: Performer) {
 }
 
 async function clearRoster() {
-  if (!confirm(`确定清空「${program.value?.name}」的名单？签到进度将一并清除`)) return;
+  const classes = program.value ? classesOf(program.value.performer).join('、') : '';
+  if (!confirm(`确定删除班级 ${classes} 的全部名单？这是全局删除，其他节目也会受影响`)) return;
   await api(`/api/admin/performers/program/${programId}`, { method: 'DELETE' });
   await load();
-}
-
-async function onCsvFile(file: File) {
-  csvPreview.value = await parseRosterCsvFile(file);
-}
-
-async function importCsv() {
-  if (!csvPreview.value?.rows.length) return;
-  try {
-    const r = await api<{ inserted: number; errors: string[] }>('/api/admin/performers/batch', {
-      method: 'POST',
-      body: JSON.stringify({ program_id: programId, rows: csvPreview.value.rows }),
-    });
-    message.value = `导入 ${r.inserted} 人${r.errors.length ? `，跳过 ${r.errors.length} 人` : ''}`;
-    csvPreview.value = null;
-    importing.value = false;
-    await load();
-  } catch (e) {
-    message.value = e instanceof Error ? e.message : '导入失败';
-  }
 }
 </script>
 
@@ -168,17 +150,15 @@ async function importCsv() {
 
     <div v-if="message" class="text-sm text-muted-foreground">{{ message }}</div>
 
-    <div class="flex flex-wrap items-center gap-3">
-      <Button variant="outline" @click="importing = true">导入名单</Button>
-      <template v-if="total">
-        <Button v-if="arrivedTotal === total" variant="outline" @click="markAll(false)">全部取消</Button>
-        <Button v-else @click="markAll(true)">全部签到</Button>
-        <Button variant="outline" class="text-destructive" @click="clearRoster">清空名单</Button>
-      </template>
+    <div v-if="total" class="flex flex-wrap items-center gap-3">
+      <Button v-if="arrivedTotal === total" variant="outline" @click="markAll(false)">全部取消</Button>
+      <Button v-else @click="markAll(true)">全部签到</Button>
+      <Button variant="outline" class="text-destructive" @click="clearRoster">删除班级名单</Button>
     </div>
 
     <div v-if="!total" class="rounded-lg border bg-card p-10 text-center text-muted-foreground">
-      名单为空，点「导入名单」上传 CSV（<code>班级, 姓名, 学号</code>）
+      没有匹配的名单：请在「全部节目」页用「导入名单」上传含
+      <code>{{ program?.performer }}</code> 班级的名单（<code>班级, 姓名, 学号</code>）
     </div>
 
     <div v-else class="rounded-lg border bg-card overflow-hidden">
@@ -226,59 +206,5 @@ async function importCsv() {
         </TableBody>
       </Table>
     </div>
-
-    <!-- 导入名单 -->
-    <Dialog :open="importing" @update:open="(v) => (importing = v)">
-      <DialogContent class="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>导入名单 · {{ program?.name }}</DialogTitle>
-        </DialogHeader>
-        <div class="grid gap-4 py-2">
-          <div class="text-sm text-muted-foreground">
-            三列：<code>班级, 姓名, 学号</code>；首行表头自动映射；支持 Excel GBK 编码；重复的人自动跳过。
-            <a href="/templates/roster_template.csv" download class="text-primary underline ml-1">下载模板 (.csv)</a>
-          </div>
-          <FileSelect accept=".csv,text/csv" @select="onCsvFile" />
-          <div v-if="csvPreview" class="grid gap-2">
-            <div class="text-sm">
-              解析出 <b class="text-primary">{{ csvPreview.rows.length }}</b> 人
-              <template v-if="csvPreview.errors.length">
-                ，<b class="text-destructive">{{ csvPreview.errors.length }}</b> 行有误：
-                <div v-for="e in csvPreview.errors.slice(0, 5)" :key="e.line" class="text-destructive">
-                  第 {{ e.line }} 行：{{ e.message }}
-                </div>
-              </template>
-            </div>
-            <div class="max-h-56 overflow-auto rounded border text-sm">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>班级</TableHead>
-                    <TableHead>姓名</TableHead>
-                    <TableHead>学号</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow v-for="(r, i) in csvPreview.rows.slice(0, 50)" :key="i">
-                    <TableCell>{{ r.class }}</TableCell>
-                    <TableCell>{{ r.name }}</TableCell>
-                    <TableCell class="tabular-nums">{{ r.student_no }}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-              <div v-if="csvPreview.rows.length > 50" class="px-3 py-2 text-muted-foreground">
-                …仅预览前 50 人
-              </div>
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" @click="importing = false">取消</Button>
-          <Button :disabled="!csvPreview?.rows.length" @click="importCsv">
-            导入 {{ csvPreview?.rows.length ?? 0 }} 人
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   </div>
 </template>

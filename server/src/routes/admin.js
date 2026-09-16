@@ -3,6 +3,7 @@ import { db } from '../db.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { getCodeInfo, touchCode, getRotationSeconds } from '../codeRotation.js';
 import { getGeofence, getMessages } from './checkin.js';
+import { classesOfProgram } from './performers.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireAdmin);
@@ -10,20 +11,23 @@ adminRouter.use(requireAdmin);
 // token 校验（登录页用；use(requireAdmin) 已拦截无效 token）
 adminRouter.get('/verify', (req, res) => res.json({ ok: true }));
 
-// 节目列表（管理页用；附各节目名单进度）
+// 节目列表（管理页用；附各节目名单进度——按「表演者=班级代码」匹配）
 adminRouter.get('/programs/full', (req, res) => {
-  const rows = db
-    .prepare(`
-      SELECT p.id, p.name, p.performer, p.start_time,
-             COUNT(f.id)                       AS roster_total,
-             COALESCE(SUM(f.arrived), 0)       AS roster_arrived
-      FROM programs p
-      LEFT JOIN performers f ON f.program_id = p.id
-      GROUP BY p.id
-      ORDER BY p.start_time ASC, p.id ASC
-    `)
+  const programs = db
+    .prepare('SELECT id, name, performer, start_time FROM programs ORDER BY start_time ASC, id ASC')
     .all();
-  res.json(rows);
+  const all = db.prepare('SELECT class, arrived FROM performers').all();
+
+  const res1 = programs.map((p) => {
+    const classes = classesOfProgram(p.performer);
+    const roster = all.filter((f) => classes.includes(f.class));
+    return {
+      ...p,
+      roster_total: roster.length,
+      roster_arrived: roster.filter((f) => f.arrived).length,
+    };
+  });
+  res.json(res1);
 });
 
 // 签到记录：分页 + 按班级聚合

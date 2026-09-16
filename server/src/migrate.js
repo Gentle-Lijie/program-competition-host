@@ -70,7 +70,7 @@ const migrations = [
     `,
   },
   {
-    // v5：节目 → 班级 → 学生（姓名、学号），名单支持外层导入自动拆分
+    // v5：名单改为按节目归属
     version: 5,
     sql: `
       DROP TABLE IF EXISTS performers;
@@ -85,6 +85,23 @@ const migrations = [
         created_at  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
       );
       CREATE INDEX idx_performers_program ON performers(program_id);
+    `,
+  },
+  {
+    // v6：名单全局化（班级 → 学生），节目页按「表演者=班级代码」匹配，无外键级联
+    version: 6,
+    sql: `
+      DROP TABLE IF EXISTS performers;
+      CREATE TABLE performers (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        class       TEXT NOT NULL,
+        name        TEXT NOT NULL,
+        student_no  TEXT NOT NULL DEFAULT '',
+        arrived     INTEGER NOT NULL DEFAULT 0,
+        arrived_at  TEXT,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+      );
+      CREATE INDEX idx_performers_class ON performers(class);
     `,
   },
 ];
