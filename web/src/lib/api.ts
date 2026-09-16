@@ -16,7 +16,7 @@ export async function api<T = unknown>(path: string, options: RequestInit = {}):
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(path, { ...options, headers });
+  const res = await fetch(path, { ...options, headers, cache: 'no-store' });
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
     try {

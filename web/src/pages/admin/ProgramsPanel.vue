@@ -13,6 +13,7 @@ import {
 import { api } from '@/lib/api';
 import type { Program } from '@/lib/programState';
 import { parseCsvFile, type CsvRow } from '@/lib/csv';
+import FileSelect from '@/components/FileSelect.vue';
 
 interface FullProgram extends Program {}
 
@@ -87,11 +88,8 @@ async function remove(p: FullProgram) {
   await load();
 }
 
-async function onCsvFile(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+async function onCsvFile(file: File) {
   csvPreview.value = await parseCsvFile(file);
-  (e.target as HTMLInputElement).value = '';
 }
 
 async function importCsv() {
@@ -188,13 +186,9 @@ async function importCsv() {
         <div class="grid gap-4 py-2">
           <div class="text-sm text-muted-foreground">
             列序：<code>开始时间(YYYY-MM-DD HH:MM), 节目名称, 表演者</code>；首行表头自动跳过；支持 Excel 的 GBK 编码。
+            <a href="/templates/program_template.csv" download class="text-primary underline ml-1">下载模板 (.csv)</a>
           </div>
-          <input
-            type="file"
-            accept=".csv,text/csv"
-            class="text-sm"
-            @change="onCsvFile"
-          />
+          <FileSelect accept=".csv,text/csv" @select="onCsvFile" />
           <div v-if="csvPreview" class="grid gap-2">
             <div class="text-sm">
               解析出 <b class="text-primary">{{ csvPreview.rows.length }}</b> 条有效

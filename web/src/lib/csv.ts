@@ -8,7 +8,6 @@ export interface CsvRow {
 }
 
 export interface RosterRow {
-  program: string;
   class: string;
   name: string;
   student_no: string;
@@ -66,21 +65,19 @@ export async function parseCsvFile(file: File): Promise<{ rows: CsvRow[]; errors
   return { rows, errors };
 }
 
-// 名单解析：四列 节目,班级,姓名,学号；首行表头自动映射（任意列序）
+// 名单解析：三列 班级,姓名,学号；首行表头自动映射（任意列序）
 export async function parseRosterCsvFile(file: File): Promise<{ rows: RosterRow[]; errors: CsvError[] }> {
   const lines = toLines(await decodeFile(file));
   const rows: RosterRow[] = [];
   const errors: CsvError[] = [];
 
-  let pIdx = 0, cIdx = 1, nIdx = 2, sIdx = 3, start = 0;
+  let cIdx = 0, nIdx = 1, sIdx = 2, start = 0;
 
   const first = lines[0]?.split(',').map((c) => c.trim()) ?? [];
-  const pf = first.findIndex((c) => c.includes('节目'));
   const cf = first.findIndex((c) => c.includes('班级'));
   const nf = first.findIndex((c) => c.includes('姓名'));
   const sf = first.findIndex((c) => c.includes('学号'));
-  if (pf >= 0 && nf >= 0) {
-    pIdx = pf;
+  if (nf >= 0) {
     cIdx = cf >= 0 ? cf : -1;
     nIdx = nf;
     sIdx = sf >= 0 ? sf : -1;
@@ -89,15 +86,14 @@ export async function parseRosterCsvFile(file: File): Promise<{ rows: RosterRow[
 
   lines.slice(start).forEach((line, i) => {
     const cols = line.split(',').map((c) => c.trim());
-    const program = cols[pIdx] ?? '';
     const cls = cIdx >= 0 ? (cols[cIdx] ?? '') : '';
     const name = cols[nIdx] ?? '';
     const studentNo = sIdx >= 0 ? (cols[sIdx] ?? '') : '';
-    if (!program || !name) {
-      errors.push({ line: i + 1, message: `节目或姓名为空（${program || '无节目'} / ${name || '无姓名'}）` });
+    if (!name) {
+      errors.push({ line: i + 1, message: '姓名为空' });
       return;
     }
-    rows.push({ program, class: cls, name, student_no: studentNo });
+    rows.push({ class: cls, name, student_no: studentNo });
   });
 
   return { rows, errors };
