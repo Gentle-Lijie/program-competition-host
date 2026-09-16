@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import QrPanel from '@/components/QrPanel.vue';
 import CheckinBadge from '@/components/CheckinBadge.vue';
 import { api } from '@/lib/api';
@@ -8,6 +9,13 @@ import { usePolling } from '@/composables/usePolling';
 import { useNow } from '@/composables/useNow';
 
 // 大屏唯一入口：基于 WONDERFUL_US.html 原版设计，动态呈现节目单
+// 背景可切换：默认白色；?bg=transparent 真透明（OBS 合成）；?bg=original 原版黄绿背景
+const route = useRoute();
+const bgMode = computed(() => {
+  const v = String(route.query.bg ?? 'white').toLowerCase();
+  return v === 'transparent' || v === 'original' ? v : 'white';
+});
+
 const programs = usePolling<Program[]>(() => api('/api/programs'), 10_000);
 const count = usePolling<{ count: number }>(() => api('/api/checkin/count'), 8_000);
 const code = usePolling<{ code: string }>(() => api('/api/checkin/code'), 60_000);
@@ -26,7 +34,7 @@ function hhmm(p: Program) {
 </script>
 
 <template>
-  <main class="slide" aria-label="WONDERFUL US 节目单">
+  <main class="slide" :class="`slide--${bgMode}`" aria-label="WONDERFUL US 节目单">
     <div class="panel">
       <!-- 节目行在面板内部滚动 -->
       <div class="rows">
@@ -63,7 +71,11 @@ body:has(.slide) {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #111;
+  background: #fff;
+}
+/* 透明模式：整页真透明，供 OBS 浏览器源合成 */
+body:has(.slide--transparent) {
+  background: transparent;
 }
 </style>
 
@@ -74,8 +86,14 @@ body:has(.slide) {
   height: min(100vh, 56.25vw);
   overflow: hidden;
   container-type: size;
-  background: url('/assets/WONDERFUL_US_background.png') center / 100% 100% no-repeat;
+  background: #fff;
   isolation: isolate;
+}
+.slide--original {
+  background: url('/assets/WONDERFUL_US_background.png') center / 100% 100% no-repeat;
+}
+.slide--transparent {
+  background: transparent;
 }
 
 .panel {
