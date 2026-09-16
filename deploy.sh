@@ -1,16 +1,8 @@
 #!/usr/bin/env bash
-# 一键部署：git pull → 依赖 → 构建 → PM2 托管
+# 一键部署：依赖 → 构建 → PM2 托管（更新代码请自行 git pull 后再跑本脚本）
 # 用法：./deploy.sh   （首次部署：git clone 后 cp .env.example .env 改好再跑）
 set -euo pipefail
 cd "$(dirname "$0")"
-
-echo "==> 拉取最新代码"
-if [ -d .git ]; then
-  # 运行时若改动过被跟踪的数据库，先暂存，避免 pull 冲突
-  git stash --quiet --include-untracked -- 'server/data/app.sqlite*' 2>/dev/null || true
-  git pull --ff-only
-  git stash pop --quiet 2>/dev/null || true
-fi
 
 if [ ! -f .env ]; then
   echo "==> 缺少 .env，从模板创建（记得修改 ADMIN_TOKEN）"
