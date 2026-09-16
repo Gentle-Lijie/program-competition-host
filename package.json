@@ -1,0 +1,19 @@
+{
+  "name": "program-competition-host",
+  "version": "2.0.0",
+  "private": true,
+  "description": "WONDERFUL US 节目单 · 大屏提示栏 · 扫码签到（Vue + Node + SQLite）",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c green,cyan \"npm:dev -w server\" \"npm:dev -w web\"",
+    "build": "npm run build -w web",
+    "start": "node server/src/index.js",
+    "test": "npm run test -w web"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

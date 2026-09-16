@@ -1,8 +1,20 @@
-# Ignore local config and common OS/editor files
-config/local.php
-.env
-/.idea
-.vscode
-*.log
-vendor/
+# dependencies
 node_modules/
+
+# build output
+web/dist/
+
+# runtime data (SQLite)
+server/data/
+
+# env & local config
+.env
+*.local
+
+# editor / OS
+.idea
+.vscode
+.DS_Store
+
+# logs
+*.log
