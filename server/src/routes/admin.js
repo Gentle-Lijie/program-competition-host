@@ -37,7 +37,7 @@ adminRouter.get('/checkins', (req, res) => {
 
   const total = db.prepare('SELECT COUNT(*) AS c FROM checkins').get().c;
   const rows = db
-    .prepare('SELECT id, name, affiliation, created_at FROM checkins ORDER BY id DESC LIMIT ? OFFSET ?')
+    .prepare('SELECT id, name, affiliation, device, created_at FROM checkins ORDER BY id DESC LIMIT ? OFFSET ?')
     .all(pageSize, (page - 1) * pageSize);
   const byAffiliation = db
     .prepare('SELECT affiliation, COUNT(*) AS count FROM checkins GROUP BY affiliation ORDER BY count DESC')
@@ -115,7 +115,7 @@ adminRouter.get('/settings/checkin-messages', (req, res) => {
 adminRouter.put('/settings/checkin-messages', (req, res) => {
   const body = req.body || {};
   const clean = {};
-  for (const key of ['wrong_code', 'geo_no_location', 'geo_out_of_range']) {
+  for (const key of ['wrong_code', 'geo_no_location', 'geo_out_of_range', 'duplicate']) {
     const v = typeof body[key] === 'string' ? body[key].trim() : '';
     if (!v || v.length > 100) {
       return res.status(400).json({ error: '文案不能为空且不超过 100 字' });

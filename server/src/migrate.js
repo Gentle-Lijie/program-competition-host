@@ -104,6 +104,14 @@ const migrations = [
       CREATE INDEX idx_performers_class ON performers(class);
     `,
   },
+  {
+    // v7：观众签到防重复——记录设备指纹
+    version: 7,
+    sql: `
+      ALTER TABLE checkins ADD COLUMN device TEXT NOT NULL DEFAULT '';
+      CREATE INDEX IF NOT EXISTS idx_checkins_device ON checkins(device);
+    `,
+  },
 ];
 
 export function migrate(db) {

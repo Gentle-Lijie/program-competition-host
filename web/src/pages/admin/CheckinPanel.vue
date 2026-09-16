@@ -12,6 +12,7 @@ interface Checkin {
   id: number;
   name: string;
   affiliation: string;
+  device: string;
   created_at: string;
 }
 
@@ -63,17 +64,21 @@ async function clearAll() {
             <TableHead class="w-20">#</TableHead>
             <TableHead>姓名</TableHead>
             <TableHead>班级 / 单位</TableHead>
+            <TableHead class="w-32">设备</TableHead>
             <TableHead class="w-44">签到时间</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="!data.data?.rows?.length">
-            <TableCell colspan="4" class="text-center text-muted-foreground py-10">还没有人签到</TableCell>
+            <TableCell colspan="5" class="text-center text-muted-foreground py-10">还没有人签到</TableCell>
           </TableRow>
           <TableRow v-for="c in data.data?.rows ?? []" :key="c.id">
             <TableCell class="text-muted-foreground">{{ c.id }}</TableCell>
             <TableCell class="font-medium">{{ c.name }}</TableCell>
             <TableCell>{{ c.affiliation }}</TableCell>
+            <TableCell class="text-muted-foreground font-mono text-xs" :title="c.device">
+              {{ c.device ? c.device.slice(0, 8) : '—' }}
+            </TableCell>
             <TableCell class="tabular-nums">{{ c.created_at }}</TableCell>
           </TableRow>
         </TableBody>

@@ -10,6 +10,7 @@ export const DEFAULT_CHECKIN_MESSAGES = {
   wrong_code: '签到失败，请核对信息或重新扫码',
   geo_no_location: '需要定位权限才能签到，请允许定位后重试',
   geo_out_of_range: '当前位置不在签到范围内（距离签到点约 {distance} 米，你的位置 {lat}, {lng}）',
+  duplicate: '你已经签到过了，无需重复签到',
 };
 
 export function getMessages() {
@@ -56,12 +57,24 @@ checkinRouter.get('/checkin/config', (req, res) => {
 const limiter = rateLimit({ windowMs: 60_000, max: 10 });
 
 checkinRouter.post('/checkin', limiter, (req, res) => {
-  const { name, affiliation, code, lat, lng } = req.body || {};
+  const { name, affiliation, code, lat, lng, device } = req.body || {};
   const expected = db.prepare("SELECT value FROM settings WHERE key='checkin_code'").get()?.value;
   const messages = getMessages();
 
-  if (!name?.trim() || !affiliation?.trim() || !code || code !== expected) {
+  const cleanName = name?.trim().slice(0, 50) ?? '';
+  const cleanAff = affiliation?.trim().slice(0, 50) ?? '';
+  const cleanDevice = typeof device === 'string' ? device.trim().slice(0, 64) : '';
+
+  if (!cleanName || !cleanAff || !code || code !== expected) {
     return res.status(403).json({ error: messages.wrong_code });
+  }
+
+  // 防重复：同一人（姓名+班级）或同一设备只允许签到一次
+  const dup =
+    db.prepare('SELECT id FROM checkins WHERE name=? AND affiliation=?').get(cleanName, cleanAff) ??
+    (cleanDevice && db.prepare('SELECT id FROM checkins WHERE device=?').get(cleanDevice));
+  if (dup) {
+    return res.status(403).json({ error: messages.duplicate });
   }
 
   // 地理围栏：配置后必须在圆内签到
@@ -89,8 +102,8 @@ checkinRouter.post('/checkin', limiter, (req, res) => {
   }
 
   const info = db
-    .prepare('INSERT INTO checkins (name, affiliation) VALUES (?, ?)')
-    .run(name.trim().slice(0, 50), affiliation.trim().slice(0, 50));
+    .prepare('INSERT INTO checkins (name, affiliation, device) VALUES (?, ?, ?)')
+    .run(cleanName, cleanAff, cleanDevice);
 
   const count = db.prepare('SELECT COUNT(*) AS c FROM checkins').get().c;
   res.status(201).json({ ok: true, seq: Number(info.lastInsertRowid), count });

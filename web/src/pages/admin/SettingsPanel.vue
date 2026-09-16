@@ -23,7 +23,7 @@ const fenceInput = ref({ lat: '', lng: '', radius: '' });
 const fenceMsg = ref('');
 
 // 签到提示文案
-const msgInput = ref({ wrong_code: '', geo_no_location: '', geo_out_of_range: '' });
+const msgInput = ref({ wrong_code: '', geo_no_location: '', geo_out_of_range: '', duplicate: '' });
 const msgSaved = ref(false);
 const msgHint = ref('');
 
@@ -32,7 +32,7 @@ onMounted(async () => {
     api<{ code: string }>('/api/admin/settings/checkin-code'),
     api<{ seconds: number }>('/api/admin/settings/checkin-rotation'),
     api<{ lat: number; lng: number; radius: number } | null>('/api/admin/settings/geofence'),
-    api<{ wrong_code: string; geo_no_location: string; geo_out_of_range: string }>(
+    api<{ wrong_code: string; geo_no_location: string; geo_out_of_range: string; duplicate: string }>(
       '/api/admin/settings/checkin-messages',
     ),
   ]);
@@ -248,6 +248,10 @@ async function saveMessages() {
             <div class="grid gap-1">
               <Label for="m3">不在签到范围（占位符：{'{distance}'} 米数、{'{lat}'}/{'{lng}'} 坐标）</Label>
               <Input id="m3" v-model="msgInput.geo_out_of_range" maxlength="100" />
+            </div>
+            <div class="grid gap-1">
+              <Label for="m4">重复签到</Label>
+              <Input id="m4" v-model="msgInput.duplicate" maxlength="100" />
             </div>
           </div>
           <div class="flex items-center gap-3">

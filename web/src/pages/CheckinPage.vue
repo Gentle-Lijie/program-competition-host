@@ -46,6 +46,17 @@ function getLocation(): Promise<{ lat: number; lng: number } | null> {
   });
 }
 
+// 设备指纹：localStorage 持久 UUID（浏览器无法取 MAC，以此防同设备重复签到）
+function deviceId(): string {
+  const KEY = 'pch_device_id';
+  let id = localStorage.getItem(KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
 async function submit() {
   if (!name.value.trim() || !affiliation.value.trim()) {
     error.value = '请填写姓名和班级';
@@ -61,7 +72,13 @@ async function submit() {
     }
     done.value = await api<{ seq: number; count: number }>('/api/checkin', {
       method: 'POST',
-      body: JSON.stringify({ name: name.value, affiliation: affiliation.value, code, ...loc }),
+      body: JSON.stringify({
+        name: name.value,
+        affiliation: affiliation.value,
+        code,
+        device: deviceId(),
+        ...loc,
+      }),
     });
   } catch (e) {
     error.value = e instanceof Error ? e.message : '签到失败';
