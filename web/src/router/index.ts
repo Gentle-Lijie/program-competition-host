@@ -1,7 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 
 const router = createRouter({
-  history: createWebHistory(),
+  // 哈希路由：静态托管（EdgeOne Pages 等）无需 SPA fallback 配置
+  history: createWebHashHistory(),
   routes: [
     { path: '/', name: 'screen', component: () => import('@/pages/ScreenPage.vue') },
     { path: '/bar', name: 'bar', component: () => import('@/pages/BarPage.vue') },

@@ -26,7 +26,7 @@ async function load() {
     clockOffset.value = c.server_now - Date.now();
     config.value = c;
     dataUrl.value = await QRCode.toDataURL(
-      `${location.origin}/checkin?code=${c.code}`,
+      `${location.origin}/#/checkin?code=${c.code}`,
       { width: 640, margin: 2, color: { dark: '#1F2A16', light: '#FFFFFF' } },
     );
   } catch { /* 网络抖动，下个周期重试 */ }
