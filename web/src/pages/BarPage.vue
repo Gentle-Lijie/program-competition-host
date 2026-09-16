@@ -38,6 +38,13 @@ function clock(d: Date): string {
   </div>
 </template>
 
+<style>
+/* OBS 合成：提示栏以外的整页透明 */
+body:has(.bar-page) {
+  background: transparent;
+}
+</style>
+
 <style scoped>
 .bar-page {
   width: 100vw;

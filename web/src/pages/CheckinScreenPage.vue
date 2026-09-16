@@ -71,8 +71,6 @@ const barWidth = computed(() => {
       <div v-else class="cs-loading">加载中…</div>
     </div>
 
-    <div v-if="config" class="cs-code">{{ config.code }}</div>
-
     <div v-if="remaining !== null" class="cs-countdown">
       <div class="cs-countdown__track">
         <div class="cs-countdown__bar" :style="{ width: barWidth }"></div>
@@ -85,6 +83,13 @@ const barWidth = computed(() => {
   </div>
 </template>
 
+<style>
+/* OBS 合成：整页透明 */
+body:has(.cs-page) {
+  background: transparent;
+}
+</style>
+
 <style scoped>
 .cs-page {
   min-height: 100vh;
@@ -93,7 +98,7 @@ const barWidth = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 3vh;
-  background: linear-gradient(160deg, #1f3a10 0%, #2e6417 55%, #3f7d22 100%);
+  background: transparent; /* OBS 浏览器源直接抠像合成 */
   color: #faf6ef;
   padding: 4vh 4vw;
 }
@@ -103,6 +108,7 @@ const barWidth = computed(() => {
   font-weight: 400;
   letter-spacing: 0.12em;
   margin: 0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65); /* 透明背景下压任意底色保可读 */
 }
 .cs-qr-card {
   background: #fff;
@@ -124,14 +130,6 @@ const barWidth = computed(() => {
   color: #9aa78c;
   font-size: 3vmin;
 }
-.cs-code {
-  font-family: 'ZCOOL QingKe HuangYou', 'Noto Sans SC', sans-serif;
-  font-size: 8vmin;
-  letter-spacing: 0.35em;
-  text-indent: 0.35em; /* 抵消最后一个字符的间距，视觉居中 */
-  color: #c9f0a6;
-  font-variant-numeric: tabular-nums;
-}
 .cs-countdown {
   display: flex;
   flex-direction: column;
@@ -139,6 +137,7 @@ const barWidth = computed(() => {
   gap: 1.2vmin;
   font-size: 2.6vmin;
   opacity: 0.9;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
 }
 .cs-countdown__track {
   width: 40vmin;
@@ -155,9 +154,11 @@ const barWidth = computed(() => {
 .cs-hint {
   font-size: 2.6vmin;
   opacity: 0.7;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
 }
 .cs-geo {
   font-size: 2.6vmin;
   opacity: 0.9;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
 }
 </style>
