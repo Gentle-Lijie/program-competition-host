@@ -41,7 +41,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.API_PORT) || Number(process.env.PORT) || 3000;
 app.listen(port, () => {
   console.log(`[server] http://localhost:${port}  (ADMIN_TOKEN ${process.env.ADMIN_TOKEN ? '已配置' : '未配置！管理接口不可用'})`);
 });

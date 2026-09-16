@@ -54,12 +54,25 @@ npm test       # vitest：当前/下一节目判定纯函数
 npm run build  # 产物部署用
 ```
 
-## 部署（HTTPS）
+## 部署（PM2 + HTTPS）
+
+服务器上（首次）：
 
 ```bash
-npm install --omit=dev && npm run build
-ADMIN_TOKEN=强随机密钥 PORT=3000 node server/src/index.js
+git clone https://github.com/Gentle-Lijie/program-competition-host.git
+cd program-competition-host
+cp .env.example .env   # 编辑：ADMIN_TOKEN 必改；端口可选
+./deploy.sh            # 拉代码 → 装依赖 → 构建 → PM2 托管（之后更新也只跑这个）
 ```
+
+`.env` 端口说明：
+
+- `API_PORT=3000`：后端端口（默认单端口模式——静态页与 API 都由 `pch-api` 提供，反代这一个端口即可）
+- `WEB_PORT=8080`（可选）：配置后 PM2 额外起一个 `pch-web`（vite preview）独立提供前端，`/api` 自动代理到后端——适合前端走 CDN/独立域名的场景
+
+常用 PM2 命令：`pm2 ls` 看状态、`pm2 logs pch-api` 看日志、`pm2 restart pch-api` 重启。
+
+> 注：`server/data/app.sqlite` 随仓库分发（含活动数据）；部署机运行产生的变更会在下次 `git pull` 前被 deploy.sh 自动 stash 保留。
 
 用 Nginx/Caddy 反代到 HTTPS 即可（应用已开启 `trust proxy`，限速按 `X-Forwarded-For` 生效）。数据库与上传字体均在本地，无外部网络依赖。
 
