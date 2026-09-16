@@ -176,7 +176,7 @@ async function saveMessages() {
           <QrPanel :url="checkinUrl" />
           <code class="text-xs text-muted-foreground break-all">{{ checkinUrl }}</code>
           <p class="text-sm text-muted-foreground">
-            投屏请用<a href="/#/checkin/screen" target="_blank" class="text-primary underline">独立签到屏 ↗</a>（自动跟随换码）。
+            投屏请用<a href="/checkin/screen" target="_blank" class="text-primary underline">独立签到屏 ↗</a>（自动跟随换码）。
           </p>
         </CardContent>
       </Card>
