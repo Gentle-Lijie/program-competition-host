@@ -2,63 +2,96 @@ import { Router } from 'express';
 import { db } from '../db.js';
 import { requireAdmin } from '../middleware/auth.js';
 
-// 表演者签到：每个节目一组名单（姓名 + 学号），进入节目页逐个勾选
+// 表演者签到：节目 → 班级 → 学生（姓名、学号）
 export const performersRouter = Router();
 performersRouter.use(requireAdmin);
 
 const nowStr = () => new Date().toLocaleString('sv-SE').slice(0, 19);
 
-// 某节目的名单（?program_id= 必填）
+// 某节目的名单（按班级分组展示）
 performersRouter.get('/performers', (req, res) => {
   const programId = Number(req.query.program_id);
   if (!programId) return res.status(400).json({ error: '缺少 program_id' });
   const rows = db
-    .prepare('SELECT id, name, student_no, arrived, arrived_at FROM performers WHERE program_id=? ORDER BY id ASC')
+    .prepare(`SELECT id, class, name, student_no, arrived, arrived_at
+              FROM performers WHERE program_id=? ORDER BY class ASC, id ASC`)
     .all(programId);
   res.json(rows);
 });
 
-// CSV 批量导入：同一节目内按 (姓名, 学号) 去重
+// 节目名匹配：先精确（忽略书名号/空白），再互相包含
+const norm = (s) => String(s).replace(/[《》\s]/g, '').toLowerCase();
+
+function matchProgram(cell, programs) {
+  const n = norm(cell);
+  if (!n) return null;
+  return (
+    programs.find((p) => norm(p.name) === n) ??
+    programs.find((p) => {
+      const pn = norm(p.name);
+      return pn.includes(n) || n.includes(pn);
+    }) ?? null
+  );
+}
+
+// 外层批量导入：CSV 行自带节目名，自动识别并拆分到对应节目
 performersRouter.post('/performers/batch', (req, res) => {
-  const programId = Number(req.body?.program_id);
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
-  if (!programId) return res.status(400).json({ error: '缺少 program_id' });
   if (!rows.length) return res.status(400).json({ error: '没有可导入的行' });
 
-  const program = db.prepare('SELECT id FROM programs WHERE id=?').get(programId);
-  if (!program) return res.status(404).json({ error: '节目不存在' });
-
+  const programs = db.prepare('SELECT id, name FROM programs').all();
   const existing = new Set(
-    db.prepare('SELECT name, student_no FROM performers WHERE program_id=?').all(programId)
-      .map((r) => `${r.name}|${r.student_no}`),
+    db.prepare('SELECT program_id, name, student_no FROM performers')
+      .all()
+      .map((r) => `${r.program_id}|${r.name}|${r.student_no}`),
   );
-  const insert = db.prepare('INSERT INTO performers (program_id, name, student_no) VALUES (?, ?, ?)');
+  const insert = db.prepare(
+    'INSERT INTO performers (program_id, class, name, student_no) VALUES (?, ?, ?, ?)',
+  );
+
   const errors = [];
+  const byProgram = new Map(); // programId -> { id, name, inserted }
   let inserted = 0;
 
   db.transaction(() => {
     rows.forEach((r, i) => {
+      const programCell = String(r?.program ?? '').trim();
+      const cls = String(r?.class ?? '').trim();
       const name = String(r?.name ?? '').trim();
       const studentNo = String(r?.student_no ?? '').trim();
+
       if (!name) {
         errors.push(`第 ${i + 1} 行：姓名为空`);
         return;
       }
-      const key = `${name}|${studentNo}`;
-      if (existing.has(key)) {
-        errors.push(`第 ${i + 1} 行：${name}${studentNo ? '（' + studentNo + '）' : ''} 已在名单中，跳过`);
+      const program = matchProgram(programCell, programs);
+      if (!program) {
+        errors.push(`第 ${i + 1} 行：找不到节目「${programCell || '空'}」`);
         return;
       }
-      insert.run(programId, name.slice(0, 50), studentNo.slice(0, 30));
+      const key = `${program.id}|${name}|${studentNo}`;
+      if (existing.has(key)) {
+        errors.push(`第 ${i + 1} 行：「${program.name}」${name}${studentNo ? '（' + studentNo + '）' : ''} 已在名单中，跳过`);
+        return;
+      }
+      insert.run(program.id, cls.slice(0, 50), name.slice(0, 50), studentNo.slice(0, 30));
       existing.add(key);
       inserted++;
+      const rec = byProgram.get(program.id) ?? { id: program.id, name: program.name, inserted: 0 };
+      rec.inserted++;
+      byProgram.set(program.id, rec);
     });
   })();
 
-  res.json({ inserted, skipped: rows.length - inserted, errors });
+  res.json({
+    inserted,
+    skipped: rows.length - inserted,
+    errors,
+    by_program: [...byProgram.values()],
+  });
 });
 
-// 单人勾选
+// 单人签到/取消
 performersRouter.patch('/performers/:id/arrived', (req, res) => {
   const arrived = req.body?.arrived ? 1 : 0;
   const info = db

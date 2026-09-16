@@ -53,13 +53,31 @@ const migrations = [
     `,
   },
   {
-    // v4：名单改为按节目归属（姓名 + 学号），弃用班级模型
+    // v4：名单改为按节目归属（姓名 + 学号）
     version: 4,
     sql: `
       DROP TABLE IF EXISTS performers;
       CREATE TABLE performers (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
         program_id  INTEGER NOT NULL REFERENCES programs(id) ON DELETE CASCADE,
+        name        TEXT NOT NULL,
+        student_no  TEXT NOT NULL DEFAULT '',
+        arrived     INTEGER NOT NULL DEFAULT 0,
+        arrived_at  TEXT,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+      );
+      CREATE INDEX idx_performers_program ON performers(program_id);
+    `,
+  },
+  {
+    // v5：节目 → 班级 → 学生（姓名、学号），名单支持外层导入自动拆分
+    version: 5,
+    sql: `
+      DROP TABLE IF EXISTS performers;
+      CREATE TABLE performers (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        program_id  INTEGER NOT NULL REFERENCES programs(id) ON DELETE CASCADE,
+        class       TEXT NOT NULL DEFAULT '',
         name        TEXT NOT NULL,
         student_no  TEXT NOT NULL DEFAULT '',
         arrived     INTEGER NOT NULL DEFAULT 0,
