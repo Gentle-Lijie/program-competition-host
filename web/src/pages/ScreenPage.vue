@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue';
 import { api } from '@/lib/api';
 import { computeCurrentNext, type Program } from '@/lib/programState';
 import { usePolling } from '@/composables/usePolling';
@@ -16,6 +16,34 @@ const currentId = computed(
 function hhmm(p: Program) {
   return p.start_time.slice(11);
 }
+
+// 行内容自适应：超宽自动缩字号，保证任何字不被截断（不省略号、不换行）
+function fitRows() {
+  document.querySelectorAll<HTMLElement>('.row-inner').forEach((el) => {
+    el.style.fontSize = '';
+    const row = el.parentElement as HTMLElement;
+    const avail = row.clientWidth;
+    if (el.scrollWidth > avail && el.scrollWidth > 0) {
+      const base = parseFloat(getComputedStyle(el).fontSize);
+      el.style.fontSize = `${Math.max(24, Math.floor((base * avail) / el.scrollWidth))}px`;
+      // 二次校正：吸收取整与亚像素偏差
+      if (el.scrollWidth > avail) {
+        const cur = parseFloat(el.style.fontSize);
+        el.style.fontSize = `${Math.max(20, Math.floor((cur * avail) / el.scrollWidth))}px`;
+      }
+    }
+  });
+}
+
+watch(() => programs.data, () => nextTick(fitRows));
+onMounted(() => {
+  fitRows();
+  // 原版字体异步加载，加载完成前后各补测几次（回退字体与原版宽度不同）
+  document.fonts?.ready.then(() => nextTick(fitRows));
+  [300, 1000, 2500].forEach((ms) => setTimeout(fitRows, ms));
+  window.addEventListener('resize', fitRows);
+});
+onBeforeUnmount(() => window.removeEventListener('resize', fitRows));
 </script>
 
 <template>
@@ -29,9 +57,11 @@ function hhmm(p: Program) {
           class="row"
           :class="{ 'row--current': p.id === currentId }"
         >
-          <span class="code">{{ p.performer }}</span>
-          <span class="song">{{ p.name }}</span>
-          <span class="time">{{ hhmm(p) }}</span>
+          <div class="row-inner">
+            <span class="code">{{ p.performer }}</span>
+            <span class="song">{{ p.name }}</span>
+            <span class="time">{{ hhmm(p) }}</span>
+          </div>
         </div>
         <div v-if="!(programs.data ?? []).length" class="empty">暂无节目，请到后台添加</div>
       </div>
@@ -152,10 +182,12 @@ body:has(.slide) {
 }
 
 .row {
-  position: relative;
   flex: 1 1 0;
   min-height: 9%;
   max-height: 12.2%;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 三字段拼成一组，整体水平居中 */
   color: #005300;
   font-family: 'Wonderful Chinese Black', sans-serif;
   font-size: 3.97cqw;
@@ -163,35 +195,28 @@ body:has(.slide) {
   line-height: 1.4;
   opacity: 0.82;
 }
+/* 当前行：高亮紧贴内容成一整块 */
 .row--current {
   opacity: 1;
-  background: rgba(154, 218, 133, 0.28);
+}
+.row--current .row-inner {
+  background: rgba(154, 218, 133, 0.32);
   border-radius: 0.6cqw;
+  padding: 0.06em 0.6em;
+}
+.row-inner {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55em; /* em 单位：随缩放字号等比缩，保证 fit 计算精确 */
+  white-space: nowrap;
+  max-width: 100%;
 }
 .code,
 .song,
 .time {
-  position: absolute;
-  top: 0;
-  height: 100%;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.code {
-  left: 16.25%;
-  width: 22.58%;
-  text-align: center;
-}
-.song {
-  left: 35.24%;
-  width: 17.76%;
-  text-align: left;
 }
 .time {
-  left: 51.63%;
-  width: 35.29%;
-  text-align: left;
   font-variant-numeric: tabular-nums;
 }
 
