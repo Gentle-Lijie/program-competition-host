@@ -12,6 +12,7 @@ const router = createRouter({
         { path: '', redirect: '/admin/programs' },
         { path: 'programs', component: () => import('@/pages/admin/ProgramsPanel.vue') },
         { path: 'arrived', component: () => import('@/pages/admin/ArrivedPanel.vue') },
+        { path: 'arrived/:programId', component: () => import('@/pages/admin/ProgramRosterPage.vue') },
         { path: 'checkins', component: () => import('@/pages/admin/CheckinPanel.vue') },
         { path: 'settings', component: () => import('@/pages/admin/SettingsPanel.vue') },
       ],

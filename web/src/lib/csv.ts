@@ -9,7 +9,7 @@ export interface CsvRow {
 
 export interface RosterRow {
   name: string;
-  class: string;
+  student_no: string;
 }
 
 export interface CsvError {
@@ -64,34 +64,34 @@ export async function parseCsvFile(file: File): Promise<{ rows: CsvRow[]; errors
   return { rows, errors };
 }
 
-// 名单解析：默认列序 姓名,班级；首行表头含「姓名/班级」则按表头映射（任意列序）
+// 名单解析：默认列序 姓名,学号；首行表头含「姓名/学号」则按表头映射（任意列序）
 export async function parseRosterCsvFile(file: File): Promise<{ rows: RosterRow[]; errors: CsvError[] }> {
   const lines = toLines(await decodeFile(file));
   const rows: RosterRow[] = [];
   const errors: CsvError[] = [];
 
   let nameIdx = 0;
-  let classIdx = 1;
+  let noIdx = 1;
   let start = 0;
 
   const first = lines[0]?.split(',').map((c) => c.trim()) ?? [];
   const nIdx = first.findIndex((c) => c.includes('姓名'));
-  const cIdx = first.findIndex((c) => c.includes('班级') || c.includes('单位'));
-  if (nIdx >= 0 && cIdx >= 0 && nIdx !== cIdx) {
+  const sIdx = first.findIndex((c) => c.includes('学号'));
+  if (nIdx >= 0 && sIdx >= 0 && nIdx !== sIdx) {
     nameIdx = nIdx;
-    classIdx = cIdx;
+    noIdx = sIdx;
     start = 1; // 跳过表头
   }
 
   lines.slice(start).forEach((line, i) => {
     const cols = line.split(',').map((c) => c.trim());
     const name = cols[nameIdx] ?? '';
-    const cls = cols[classIdx] ?? '';
-    if (!name || !cls) {
-      errors.push({ line: i + 1, message: '姓名或班级为空' });
+    const studentNo = cols[noIdx] ?? '';
+    if (!name) {
+      errors.push({ line: i + 1, message: '姓名为空' });
       return;
     }
-    rows.push({ name, class: cls });
+    rows.push({ name, student_no: studentNo });
   });
 
   return { rows, errors };

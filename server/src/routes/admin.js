@@ -10,10 +10,18 @@ adminRouter.use(requireAdmin);
 // token 校验（登录页用；use(requireAdmin) 已拦截无效 token）
 adminRouter.get('/verify', (req, res) => res.json({ ok: true }));
 
-// 节目列表（管理页用）
+// 节目列表（管理页用；附各节目名单进度）
 adminRouter.get('/programs/full', (req, res) => {
   const rows = db
-    .prepare('SELECT id, name, performer, start_time FROM programs ORDER BY start_time ASC, id ASC')
+    .prepare(`
+      SELECT p.id, p.name, p.performer, p.start_time,
+             COUNT(f.id)                       AS roster_total,
+             COALESCE(SUM(f.arrived), 0)       AS roster_arrived
+      FROM programs p
+      LEFT JOIN performers f ON f.program_id = p.id
+      GROUP BY p.id
+      ORDER BY p.start_time ASC, p.id ASC
+    `)
     .all();
   res.json(rows);
 });
