@@ -37,6 +37,21 @@ const migrations = [
       db.prepare(`INSERT OR IGNORE INTO settings (key, value) VALUES ('checkin_code_updated', '${Date.now()}')`).run();
     },
   },
+  {
+    // v3：表演者签到名单（按班级分组逐个勾选）
+    version: 3,
+    sql: `
+      CREATE TABLE performers (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        name       TEXT NOT NULL,
+        class      TEXT NOT NULL,
+        arrived    INTEGER NOT NULL DEFAULT 0,
+        arrived_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+      );
+      CREATE INDEX idx_performers_class ON performers(class);
+    `,
+  },
 ];
 
 export function migrate(db) {

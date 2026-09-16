@@ -1,10 +1,15 @@
 // CSV 前端解析：嗅探 UTF-8 BOM，无 BOM 按 GBK 解码（Excel 中文默认编码）
-// 列序与原项目 cli/import_csv.php 一致：start_time(YYYY-MM-DD HH:MM), name, performer；首行表头自动跳过
+// 节目单列序与原项目 cli/import_csv.php 一致：start_time(YYYY-MM-DD HH:MM), name, performer；首行表头自动跳过
 
 export interface CsvRow {
   start_time: string;
   name: string;
   performer: string;
+}
+
+export interface RosterRow {
+  name: string;
+  class: string;
 }
 
 export interface CsvError {
@@ -14,7 +19,8 @@ export interface CsvError {
 
 const TIME_RE = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
 
-export async function parseCsvFile(file: File): Promise<{ rows: CsvRow[]; errors: CsvError[] }> {
+// 解码：BOM → UTF-8；含非法 UTF-8 序列 → GBK
+async function decodeFile(file: File): Promise<string> {
   const buf = new Uint8Array(await file.arrayBuffer());
   const hasBom = buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf;
   let isUtf8 = hasBom;
@@ -23,13 +29,19 @@ export async function parseCsvFile(file: File): Promise<{ rows: CsvRow[]; errors
       new TextDecoder('utf-8', { fatal: true }).decode(buf);
       isUtf8 = true;
     } catch {
-      isUtf8 = false; // 含非法 UTF-8 序列，按 GBK 处理
+      isUtf8 = false;
     }
   }
   const decoder = new TextDecoder(isUtf8 ? 'utf-8' : 'gbk');
-  const text = decoder.decode(hasBom ? buf.subarray(3) : buf);
+  return decoder.decode(hasBom ? buf.subarray(3) : buf);
+}
 
-  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '');
+function toLines(text: string): string[] {
+  return text.split(/\r?\n/).filter((l) => l.trim() !== '');
+}
+
+export async function parseCsvFile(file: File): Promise<{ rows: CsvRow[]; errors: CsvError[] }> {
+  const lines = toLines(await decodeFile(file));
   const rows: CsvRow[] = [];
   const errors: CsvError[] = [];
 
@@ -47,6 +59,39 @@ export async function parseCsvFile(file: File): Promise<{ rows: CsvRow[]; errors
       return;
     }
     rows.push({ start_time: start, name, performer });
+  });
+
+  return { rows, errors };
+}
+
+// 名单解析：默认列序 姓名,班级；首行表头含「姓名/班级」则按表头映射（任意列序）
+export async function parseRosterCsvFile(file: File): Promise<{ rows: RosterRow[]; errors: CsvError[] }> {
+  const lines = toLines(await decodeFile(file));
+  const rows: RosterRow[] = [];
+  const errors: CsvError[] = [];
+
+  let nameIdx = 0;
+  let classIdx = 1;
+  let start = 0;
+
+  const first = lines[0]?.split(',').map((c) => c.trim()) ?? [];
+  const nIdx = first.findIndex((c) => c.includes('姓名'));
+  const cIdx = first.findIndex((c) => c.includes('班级') || c.includes('单位'));
+  if (nIdx >= 0 && cIdx >= 0 && nIdx !== cIdx) {
+    nameIdx = nIdx;
+    classIdx = cIdx;
+    start = 1; // 跳过表头
+  }
+
+  lines.slice(start).forEach((line, i) => {
+    const cols = line.split(',').map((c) => c.trim());
+    const name = cols[nameIdx] ?? '';
+    const cls = cols[classIdx] ?? '';
+    if (!name || !cls) {
+      errors.push({ line: i + 1, message: '姓名或班级为空' });
+      return;
+    }
+    rows.push({ name, class: cls });
   });
 
   return { rows, errors };

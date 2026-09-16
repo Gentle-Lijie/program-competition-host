@@ -8,6 +8,7 @@ import { scheduleRotation } from './codeRotation.js';
 import { programsRouter } from './routes/programs.js';
 import { checkinRouter } from './routes/checkin.js';
 import { adminRouter } from './routes/admin.js';
+import { performersRouter } from './routes/performers.js';
 
 scheduleRotation(); // 签到码定时轮换（若已开启）
 
@@ -22,6 +23,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api', programsRouter);
 app.use('/api', checkinRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/admin', performersRouter);
 
 // 静态托管前端构建产物 + SPA history fallback
 const dist = path.join(__dirname, '../../web/dist');

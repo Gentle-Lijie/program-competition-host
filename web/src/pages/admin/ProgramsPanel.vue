@@ -14,9 +14,7 @@ import { api } from '@/lib/api';
 import type { Program } from '@/lib/programState';
 import { parseCsvFile, type CsvRow } from '@/lib/csv';
 
-interface FullProgram extends Program {
-  arrived: number;
-}
+interface FullProgram extends Program {}
 
 const programs = ref<FullProgram[]>([]);
 const loading = ref(false);
@@ -132,13 +130,12 @@ async function importCsv() {
             <TableHead class="w-44">开始时间</TableHead>
             <TableHead>节目名称</TableHead>
             <TableHead>表演者</TableHead>
-            <TableHead class="w-24 text-center">状态</TableHead>
             <TableHead class="w-32 text-right">操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="!programs.length && !loading">
-            <TableCell colspan="5" class="text-center text-muted-foreground py-10">
+            <TableCell colspan="4" class="text-center text-muted-foreground py-10">
               暂无节目，点「新增节目」或「导入 CSV」开始
             </TableCell>
           </TableRow>
@@ -146,10 +143,6 @@ async function importCsv() {
             <TableCell class="tabular-nums">{{ p.start_time }}</TableCell>
             <TableCell class="font-medium">{{ p.name }}</TableCell>
             <TableCell>{{ p.performer }}</TableCell>
-            <TableCell class="text-center">
-              <Badge v-if="p.arrived" class="bg-brand text-primary-foreground">已到场</Badge>
-              <Badge v-else variant="outline">未到场</Badge>
-            </TableCell>
             <TableCell class="text-right">
               <Button variant="ghost" size="sm" @click="openEdit(p)">编辑</Button>
               <Button variant="ghost" size="sm" class="text-destructive" @click="remove(p)">删除</Button>

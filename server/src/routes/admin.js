@@ -10,18 +10,10 @@ adminRouter.use(requireAdmin);
 // token 校验（登录页用；use(requireAdmin) 已拦截无效 token）
 adminRouter.get('/verify', (req, res) => res.json({ ok: true }));
 
-// 表演者到场标记
-adminRouter.patch('/programs/:id/arrived', (req, res) => {
-  const arrived = req.body?.arrived ? 1 : 0;
-  const info = db.prepare('UPDATE programs SET arrived=? WHERE id=?').run(arrived, Number(req.params.id));
-  if (info.changes === 0) return res.status(404).json({ error: '节目不存在' });
-  res.json({ ok: true, arrived });
-});
-
-// 节目列表（含 arrived，供到场标记页）
+// 节目列表（管理页用）
 adminRouter.get('/programs/full', (req, res) => {
   const rows = db
-    .prepare('SELECT id, name, performer, start_time, arrived FROM programs ORDER BY start_time ASC, id ASC')
+    .prepare('SELECT id, name, performer, start_time FROM programs ORDER BY start_time ASC, id ASC')
     .all();
   res.json(rows);
 });
