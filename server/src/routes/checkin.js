@@ -48,6 +48,7 @@ function haversineMeters(lat1, lng1, lat2, lng2) {
 checkinRouter.get('/checkin/config', (req, res) => {
   res.json({
     ...getCodeInfo(),
+    server_now: Date.now(), // 供前端校准时钟偏移，倒计时不受两端时钟不一致影响
     geo_required: getGeofence() !== null,
     messages: getMessages(),
   });

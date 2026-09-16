@@ -8,11 +8,13 @@ interface Config {
   code: string;
   rotate_seconds: number;
   updated_at: number;
+  server_now: number;
   geo_required: boolean;
 }
 
 const config = ref<Config | null>(null);
 const nowMs = ref(Date.now());
+const clockOffset = ref(0); // 服务器时间 - 本地时间，消除两端时钟不一致
 const dataUrl = ref('');
 
 let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -21,6 +23,7 @@ let clockTimer: ReturnType<typeof setInterval> | null = null;
 async function load() {
   try {
     const c = await api<Config>('/api/checkin/config');
+    clockOffset.value = c.server_now - Date.now();
     config.value = c;
     dataUrl.value = await QRCode.toDataURL(
       `${location.origin}/checkin?code=${c.code}`,
@@ -39,16 +42,22 @@ onBeforeUnmount(() => {
   if (clockTimer) clearInterval(clockTimer);
 });
 
+// 按服务器时钟计算的"现在"
+const serverNow = computed(() => nowMs.value + clockOffset.value);
+
 const remaining = computed(() => {
   const c = config.value;
   if (!c || !c.rotate_seconds) return null;
-  return Math.max(0, Math.ceil((c.updated_at + c.rotate_seconds * 1000 - nowMs.value) / 1000));
+  return Math.max(0, Math.ceil((c.updated_at + c.rotate_seconds * 1000 - serverNow.value) / 1000));
 });
 
 const barWidth = computed(() => {
   const c = config.value;
   if (!c || !c.rotate_seconds || !c.updated_at) return '100%';
-  const frac = Math.min(1, Math.max(0, (c.updated_at + c.rotate_seconds * 1000 - nowMs.value) / (c.rotate_seconds * 1000)));
+  const frac = Math.min(
+    1,
+    Math.max(0, (c.updated_at + c.rotate_seconds * 1000 - serverNow.value) / (c.rotate_seconds * 1000)),
+  );
   return `${(frac * 100).toFixed(1)}%`;
 });
 </script>
@@ -68,7 +77,7 @@ const barWidth = computed(() => {
       <div class="cs-countdown__track">
         <div class="cs-countdown__bar" :style="{ width: barWidth }"></div>
       </div>
-      <span>{{ remaining }} 秒后自动换码</span>
+      <span>{{ remaining > 0 ? `${remaining} 秒后自动换码` : '正在换码…' }}</span>
     </div>
     <div v-else class="cs-hint">二维码长期有效</div>
 
