@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+@import '@fontsource/zcool-qingke-huangyou';
+@import '@fontsource/noto-sans-sc/400.css';
+@import '@fontsource/noto-sans-sc/500.css';
+@import '@fontsource/noto-sans-sc/700.css';
+@import '@fontsource/noto-sans-sc/900.css';
+
+/* 大屏原版字体（提取自 WONDERFUL US.pptx，仅用于大屏页面） */
+@font-face {
+  font-family: 'Broadway Engraved';
+  src: url('/assets/WONDERFUL_US_broadway.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Wonderful Chinese Display';
+  src: url('/assets/WONDERFUL_US_chinese_display.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Wonderful Chinese Black';
+  src: url('/assets/WONDERFUL_US_chinese_black.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+/* ========== WONDERFUL US 主题（shadcn CSS 变量） ========== */
+:root {
+  --background: #faf6ef;          /* 米色 Portland Stone */
+  --foreground: #1f2a16;
+
+  --primary: #2e6417;             /* 深绿：标题、主按钮 */
+  --primary-foreground: #faf6ef;
+
+  --secondary: #e9f2dd;           /* 淡绿底 */
+  --secondary-foreground: #2e6417;
+
+  --muted: #f0ead9;
+  --muted-foreground: #6b7a5c;
+
+  --accent: #dff0d3;              /* 行 hover */
+  --accent-foreground: #1f2a16;
+
+  --destructive: #b3261e;
+  --destructive-foreground: #faf6ef;
+
+  --border: #d8dfc9;
+  --input: #d8dfc9;
+  --ring: #2e6417;
+
+  --radius: 0.625rem;
+
+  --brand-leaf: #9ada85;          /* 草绿：badge / 高亮 */
+  --brand-deep: #2e6417;
+  --brand-ink: #005300;           /* 大屏行文字 */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand-leaf);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-display: 'ZCOOL QingKe HuangYou', 'Noto Sans SC', sans-serif;
+  --font-body: 'Noto Sans SC', system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+  }
+}

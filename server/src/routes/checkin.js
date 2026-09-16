@@ -28,3 +28,9 @@ checkinRouter.get('/checkin/count', (req, res) => {
   const count = db.prepare('SELECT COUNT(*) AS c FROM checkins').get().c;
   res.json({ count });
 });
+
+// 签到码（公开：本来就要投在大屏二维码里）
+checkinRouter.get('/checkin/code', (req, res) => {
+  const row = db.prepare("SELECT value FROM settings WHERE key='checkin_code'").get();
+  res.json({ code: row?.value ?? '' });
+});

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { migrate } from './migrate.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = process.env.DB_PATH || path.join(__dirname, '../../data/app.sqlite');
+const dbPath = process.env.DB_PATH || path.join(__dirname, '../data/app.sqlite');
 
 mkdirSync(path.dirname(dbPath), { recursive: true });
 
