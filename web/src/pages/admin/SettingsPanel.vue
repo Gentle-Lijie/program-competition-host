@@ -246,7 +246,7 @@ async function saveMessages() {
               <Input id="m2" v-model="msgInput.geo_no_location" maxlength="100" />
             </div>
             <div class="grid gap-1">
-              <Label for="m3">不在签到范围（可用 {distance} 显示实际米数）</Label>
+              <Label for="m3">不在签到范围（占位符：{'{distance}'} 米数、{'{lat}'}/{'{lng}'} 坐标）</Label>
               <Input id="m3" v-model="msgInput.geo_out_of_range" maxlength="100" />
             </div>
           </div>

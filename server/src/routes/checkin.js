@@ -9,7 +9,7 @@ export const checkinRouter = Router();
 export const DEFAULT_CHECKIN_MESSAGES = {
   wrong_code: '签到失败，请核对信息或重新扫码',
   geo_no_location: '需要定位权限才能签到，请允许定位后重试',
-  geo_out_of_range: '当前位置不在签到范围内（距离签到点约 {distance} 米）',
+  geo_out_of_range: '当前位置不在签到范围内（距离签到点约 {distance} 米，你的位置 {lat}, {lng}）',
 };
 
 export function getMessages() {
@@ -72,10 +72,18 @@ checkinRouter.post('/checkin', limiter, (req, res) => {
     }
     const distance = Math.round(haversineMeters(fence.lat, fence.lng, lat, lng));
     if (distance > fence.radius) {
-      // 文案里带 {distance} 则替换为实际米数，否则追加
-      const msg = messages.geo_out_of_range.includes('{distance}')
-        ? messages.geo_out_of_range.replaceAll('{distance}', String(distance))
-        : `${messages.geo_out_of_range}（距离签到点约 ${distance} 米）`;
+      // 占位符：{distance} 米数、{lat}/{lng} 签到者坐标；未使用的占位符信息追加在末尾
+      const vars = { distance: String(distance), lat: lat.toFixed(6), lng: lng.toFixed(6) };
+      let msg = messages.geo_out_of_range
+        .replaceAll('{distance}', vars.distance)
+        .replaceAll('{lat}', vars.lat)
+        .replaceAll('{lng}', vars.lng);
+      const extra = [
+        !messages.geo_out_of_range.includes('{distance}') && `距离签到点约 ${vars.distance} 米`,
+        (!messages.geo_out_of_range.includes('{lat}') || !messages.geo_out_of_range.includes('{lng}')) &&
+          `位置 ${vars.lat}, ${vars.lng}`,
+      ].filter(Boolean);
+      if (extra.length) msg += `（${extra.join('，')}）`;
       return res.status(403).json({ error: msg });
     }
   }
