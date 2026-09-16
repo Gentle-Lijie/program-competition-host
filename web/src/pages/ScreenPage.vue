@@ -17,15 +17,36 @@ function hhmm(p: Program) {
   return p.start_time.slice(11);
 }
 
-// 行内容自适应：超宽自动缩字号，保证任何字不被截断（不省略号、不换行）
+// 行内容自适应：
+// 1) 高度方向：行多时整体缩基准字号（下限 40px），仍放不下则面板内滚动
+// 2) 宽度方向：单行超宽自动缩字号，保证任何字不被截断（不省略号、不换行）
 function fitRows() {
+  const container = document.querySelector<HTMLElement>('.rows');
+  if (!container) return;
+  container.style.fontSize = '';
+  const rowEls = [...container.querySelectorAll<HTMLElement>(':scope > .row')];
+  if (!rowEls.length) return;
+
+  // 高度自适应
+  const cs = getComputedStyle(container);
+  const gap = parseFloat(cs.rowGap) || 0;
+  const availH = container.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const base = parseFloat(getComputedStyle(rowEls[0]).fontSize);
+  const rcs = getComputedStyle(rowEls[0]);
+  const perRow = parseFloat(rcs.lineHeight) + parseFloat(rcs.paddingTop) + parseFloat(rcs.paddingBottom) + gap;
+  const needH = rowEls.length * perRow - gap;
+  if (needH > availH && needH > 0) {
+    container.style.fontSize = `${Math.max(40, Math.floor(base * (availH / needH)))}px`;
+  }
+
+  // 宽度自适应
   document.querySelectorAll<HTMLElement>('.row-inner').forEach((el) => {
     el.style.fontSize = '';
     const row = el.parentElement as HTMLElement;
     const avail = row.clientWidth;
     if (el.scrollWidth > avail && el.scrollWidth > 0) {
-      const base = parseFloat(getComputedStyle(el).fontSize);
-      el.style.fontSize = `${Math.max(24, Math.floor((base * avail) / el.scrollWidth))}px`;
+      const b = parseFloat(getComputedStyle(el).fontSize);
+      el.style.fontSize = `${Math.max(24, Math.floor((b * avail) / el.scrollWidth))}px`;
       // 二次校正：吸收取整与亚像素偏差
       if (el.scrollWidth > avail) {
         const cur = parseFloat(el.style.fontSize);
@@ -175,24 +196,24 @@ body:has(.slide) {
   scrollbar-width: none;
   display: flex;
   flex-direction: column;
-  gap: 0.8%;
+  gap: 0.45em; /* 行与行的上下间距（随字号等比缩放） */
+  font-size: 5cqw; /* 基准字号，行多时由 fitRows 整体缩小 */
 }
 .rows::-webkit-scrollbar {
   display: none;
 }
 
 .row {
-  flex: 1 1 0;
-  min-height: 9%;
-  max-height: 12.2%;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: center; /* 三字段拼成一组，整体水平居中 */
+  padding: 0.22em 0; /* 行内上下留白 */
   color: #005300;
   font-family: 'Wonderful Chinese Black', sans-serif;
-  font-size: 3.97cqw;
+  font-size: 1.5em; /* 跟随 .rows 的基准字号 */
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 1;
   opacity: 0.82;
 }
 /* 当前行：高亮紧贴内容成一整块 */
@@ -223,7 +244,7 @@ body:has(.slide) {
 .empty {
   margin: auto;
   font-family: 'Wonderful Chinese Black', sans-serif;
-  font-size: 3cqw;
+  font-size: 0.75em;
   color: rgba(0, 83, 0, 0.5);
 }
 </style>
