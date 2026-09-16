@@ -108,6 +108,10 @@ function useCurrentLocation() {
     fenceMsg.value = '当前设备不支持定位';
     return;
   }
+  if (!window.isSecureContext) {
+    fenceMsg.value = '定位需要 HTTPS 环境（当前页面不是安全上下文）';
+    return;
+  }
   fenceMsg.value = '定位中…';
   navigator.geolocation.getCurrentPosition(
     (pos) => {
@@ -115,8 +119,15 @@ function useCurrentLocation() {
       fenceInput.value.lng = pos.coords.longitude.toFixed(6);
       fenceMsg.value = '已填入当前位置，检查半径后保存';
     },
-    () => (fenceMsg.value = '获取定位失败，请检查权限'),
-    { enableHighAccuracy: true, timeout: 10000 },
+    (err) => {
+      const hints: Record<number, string> = {
+        1: '定位被拒绝：检查浏览器地址栏权限，以及系统「设置 → 隐私与安全性 → 定位服务」里是否勾选了浏览器',
+        2: '暂时拿不到位置（网络/定位服务不可用），稍后重试',
+        3: '定位超时，请重试',
+      };
+      fenceMsg.value = hints[err.code] ?? `获取定位失败（${err.message}）`;
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
   );
 }
 
