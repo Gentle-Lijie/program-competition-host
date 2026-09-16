@@ -9,7 +9,7 @@ export const checkinRouter = Router();
 export const DEFAULT_CHECKIN_MESSAGES = {
   wrong_code: '签到失败，请核对信息或重新扫码',
   geo_no_location: '需要定位权限才能签到，请允许定位后重试',
-  geo_out_of_range: '当前位置不在签到范围内',
+  geo_out_of_range: '当前位置不在签到范围内（距离签到点约 {distance} 米）',
 };
 
 export function getMessages() {
@@ -70,8 +70,13 @@ checkinRouter.post('/checkin', limiter, (req, res) => {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       return res.status(403).json({ error: messages.geo_no_location });
     }
-    if (haversineMeters(fence.lat, fence.lng, lat, lng) > fence.radius) {
-      return res.status(403).json({ error: messages.geo_out_of_range });
+    const distance = Math.round(haversineMeters(fence.lat, fence.lng, lat, lng));
+    if (distance > fence.radius) {
+      // 文案里带 {distance} 则替换为实际米数，否则追加
+      const msg = messages.geo_out_of_range.includes('{distance}')
+        ? messages.geo_out_of_range.replaceAll('{distance}', String(distance))
+        : `${messages.geo_out_of_range}（距离签到点约 ${distance} 米）`;
+      return res.status(403).json({ error: msg });
     }
   }
 
