@@ -1,3 +1,4 @@
+import './env.js'; // 必须最先：加载 .env（先于 db.js 读 DB_PATH）
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

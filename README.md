@@ -22,6 +22,13 @@ ADMIN_TOKEN=你的管理密钥 npm start   # 启动，默认 http://localhost:30
 
 首次启动自动建库（`server/data/app.sqlite`）并生成随机 6 位签到码。
 
+也可以把配置写进 `.env` 文件（参照 `.env.example`，已被 git 忽略；命令行里显式设置的变量优先）：
+
+```bash
+cp .env.example .env   # 然后编辑 ADMIN_TOKEN
+npm run build && npm start
+```
+
 可选环境变量：
 
 | 变量 | 默认 | 说明 |
