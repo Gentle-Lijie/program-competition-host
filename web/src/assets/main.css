@@ -30,7 +30,7 @@
 
 /* ========== WONDERFUL US 主题（shadcn CSS 变量） ========== */
 :root {
-  --background: #faf6ef;          /* 米色 Portland Stone */
+  --background: #ffffff;
   --foreground: #1f2a16;
 
   --primary: #2e6417;             /* 深绿：标题、主按钮 */
