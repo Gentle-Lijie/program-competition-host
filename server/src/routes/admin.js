@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { db } from '../db.js';
 import { requireAdmin } from '../middleware/auth.js';
+import { getCodeInfo, touchCode, getRotationSeconds } from '../codeRotation.js';
+import { getGeofence, getMessages } from './checkin.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireAdmin);
@@ -58,5 +60,65 @@ adminRouter.put('/settings/checkin-code', (req, res) => {
     return res.status(400).json({ error: '签到码应为 4-8 位数字' });
   }
   db.prepare("UPDATE settings SET value=? WHERE key='checkin_code'").run(code);
+  touchCode(); // 手动换码重置轮换计时
   res.json({ ok: true, code });
+});
+
+// ---- 签到码轮换 ----
+adminRouter.get('/settings/checkin-rotation', (req, res) => {
+  res.json({ seconds: getRotationSeconds() });
+});
+
+adminRouter.put('/settings/checkin-rotation', (req, res) => {
+  const s = Number(req.body?.seconds);
+  if (!(s === 0 || (Number.isFinite(s) && s >= 10 && s <= 86400))) {
+    return res.status(400).json({ error: '轮换秒数应为 0（关闭）或 10–86400 秒' });
+  }
+  db.prepare("INSERT INTO settings (key, value) VALUES ('checkin_rotate_seconds', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
+    .run(String(Math.floor(s)));
+  touchCode(); // 重置计时起点并重新调度
+  res.json({ ok: true, seconds: Math.floor(s) });
+});
+
+// ---- 地理围栏（圆心 + 半径）----
+adminRouter.get('/settings/geofence', (req, res) => {
+  res.json(getGeofence());
+});
+
+adminRouter.put('/settings/geofence', (req, res) => {
+  const { lat, lng, radius } = req.body || {};
+  if (
+    !Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(radius) ||
+    lat < -90 || lat > 90 || lng < -180 || lng > 180 || radius < 10 || radius > 1000000
+  ) {
+    return res.status(400).json({ error: '参数无效：纬度 ±90、经度 ±180、半径 10 米–1000 公里' });
+  }
+  db.prepare("INSERT INTO settings (key, value) VALUES ('geofence', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
+    .run(JSON.stringify({ lat: Number(lat), lng: Number(lng), radius: Math.floor(radius) }));
+  res.json({ ok: true });
+});
+
+adminRouter.delete('/settings/geofence', (req, res) => {
+  db.prepare("DELETE FROM settings WHERE key='geofence'").run();
+  res.json({ ok: true });
+});
+
+// ---- 签到提示文案 ----
+adminRouter.get('/settings/checkin-messages', (req, res) => {
+  res.json(getMessages());
+});
+
+adminRouter.put('/settings/checkin-messages', (req, res) => {
+  const body = req.body || {};
+  const clean = {};
+  for (const key of ['wrong_code', 'geo_no_location', 'geo_out_of_range']) {
+    const v = typeof body[key] === 'string' ? body[key].trim() : '';
+    if (!v || v.length > 100) {
+      return res.status(400).json({ error: '文案不能为空且不超过 100 字' });
+    }
+    clean[key] = v;
+  }
+  db.prepare("INSERT INTO settings (key, value) VALUES ('checkin_messages', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
+    .run(JSON.stringify(clean));
+  res.json({ ok: true });
 });

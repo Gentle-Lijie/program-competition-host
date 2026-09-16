@@ -28,6 +28,15 @@ const migrations = [
       db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('checkin_code', code);
     },
   },
+  {
+    // v2：签到码轮换与地理围栏所需的 settings 键（老库补种）
+    version: 2,
+    sql: '',
+    seed: (db) => {
+      db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('checkin_rotate_seconds', '0')").run();
+      db.prepare(`INSERT OR IGNORE INTO settings (key, value) VALUES ('checkin_code_updated', '${Date.now()}')`).run();
+    },
+  },
 ];
 
 export function migrate(db) {

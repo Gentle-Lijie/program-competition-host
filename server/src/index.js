@@ -4,9 +4,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import './db.js'; // 副作用：建库 + 迁移
+import { scheduleRotation } from './codeRotation.js';
 import { programsRouter } from './routes/programs.js';
 import { checkinRouter } from './routes/checkin.js';
 import { adminRouter } from './routes/admin.js';
+
+scheduleRotation(); // 签到码定时轮换（若已开启）
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();

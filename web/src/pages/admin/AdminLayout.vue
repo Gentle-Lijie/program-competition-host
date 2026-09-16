@@ -53,6 +53,7 @@ const tabs = [
       <div class="admin-header__right">
         <a href="/" target="_blank" class="admin-nav__link">大屏 ↗</a>
         <a href="/bar" target="_blank" class="admin-nav__link">提示栏 ↗</a>
+        <a href="/checkin/screen" target="_blank" class="admin-nav__link">签到屏 ↗</a>
         <button class="admin-nav__link admin-nav__link--logout" @click="logout">退出</button>
       </div>
     </header>

@@ -6,6 +6,7 @@ const router = createRouter({
     { path: '/', name: 'screen', component: () => import('@/pages/ScreenPage.vue') },
     { path: '/bar', name: 'bar', component: () => import('@/pages/BarPage.vue') },
     { path: '/checkin', name: 'checkin', component: () => import('@/pages/CheckinPage.vue') },
+    { path: '/checkin/screen', name: 'checkin-screen', component: () => import('@/pages/CheckinScreenPage.vue') },
     { path: '/admin', component: () => import('@/pages/admin/AdminLayout.vue'),
       children: [
         { path: '', redirect: '/admin/programs' },

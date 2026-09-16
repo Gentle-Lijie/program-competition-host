@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,36 @@ const affiliation = ref('');
 const submitting = ref(false);
 const error = ref('');
 const done = ref<{ seq: number; count: number } | null>(null);
+const geoRequired = ref(false);
+const messages = ref<{ wrong_code?: string; geo_no_location?: string; geo_out_of_range?: string }>({});
+
+onMounted(async () => {
+  try {
+    const c = await api<{ geo_required: boolean; messages: typeof messages.value }>(
+      '/api/checkin/config',
+    );
+    geoRequired.value = c.geo_required;
+    messages.value = c.messages ?? {};
+  } catch { /* 配置拉取失败不阻塞表单 */ }
+});
+
+// 获取定位（服务端配置了地理围栏时必须）；提示文案用后台配置
+function getLocation(): Promise<{ lat: number; lng: number } | null> {
+  return new Promise((resolve) => {
+    if (!('geolocation' in navigator)) {
+      error.value = '当前浏览器不支持定位，请换用手机浏览器';
+      return resolve(null);
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {
+        error.value = messages.value.geo_no_location || '请允许定位权限后签到';
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 },
+    );
+  });
+}
 
 async function submit() {
   if (!name.value.trim() || !affiliation.value.trim()) {
@@ -24,9 +54,14 @@ async function submit() {
   submitting.value = true;
   error.value = '';
   try {
+    let loc: { lat: number; lng: number } | null = null;
+    if (geoRequired.value) {
+      loc = await getLocation();
+      if (!loc) return;
+    }
     done.value = await api<{ seq: number; count: number }>('/api/checkin', {
       method: 'POST',
-      body: JSON.stringify({ name: name.value, affiliation: affiliation.value, code }),
+      body: JSON.stringify({ name: name.value, affiliation: affiliation.value, code, ...loc }),
     });
   } catch (e) {
     error.value = e instanceof Error ? e.message : '签到失败';
@@ -52,6 +87,7 @@ async function submit() {
           <Input id="affiliation" v-model="affiliation" placeholder="如 EG2601" maxlength="50" @keyup.enter="submit" />
         </div>
         <div v-if="!code" class="text-sm text-destructive">签到链接无效，请扫描现场二维码</div>
+        <div v-if="geoRequired" class="text-sm text-muted-foreground">📍 本场签到需要定位权限，提交时将请求定位</div>
         <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
         <Button :disabled="submitting || !code" @click="submit">
           {{ submitting ? '提交中…' : '签 到' }}
