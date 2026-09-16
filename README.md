@@ -72,6 +72,16 @@ cp .env.example .env   # 编辑：ADMIN_TOKEN 必改；端口可选
 
 常用 PM2 命令：`pm2 ls` 看状态、`pm2 logs pch-api` 看日志、`pm2 restart pch-api` 重启。
 
+### 前端托管到 CDN（EdgeOne Pages 等）
+
+前端静态资源可单独托管，API 留在服务器：
+
+1. **前端构建注入 API 地址**：`VITE_API_BASE_URL=https://api.example.com`（构建时环境变量；EdgeOne Pages 在项目设置里配）
+2. **后端放行跨域**：服务器 `.env` 加 `CORS_ORIGIN=https://frontend.example.com`（逗号分隔多个；`*` 放开全部，不建议），然后 `./deploy.sh`
+3. EdgeOne Pages 构建参数：仓库根目录运行，Build command `npm install && npm run build -w web`，输出目录 `web/dist`
+
+未配置 `VITE_API_BASE_URL` 时默认同源请求，单端口部署行为不变。
+
 > 注：`server/data/app.sqlite` 随仓库分发（含活动数据）；部署机运行产生的数据库变更与仓库更新冲突时，`git stash -- server/data/app.sqlite && git pull && git stash pop` 可保留现场数据。
 
 用 Nginx/Caddy 反代到 HTTPS 即可（应用已开启 `trust proxy`，限速按 `X-Forwarded-For` 生效）。数据库与上传字体均在本地，无外部网络依赖。
