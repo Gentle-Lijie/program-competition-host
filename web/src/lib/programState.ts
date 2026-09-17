@@ -37,3 +37,19 @@ export function computeCurrentNext(programs: Program[], now: Date): CurrentNext 
     next: sorted[currentIdx + 1] ?? null, // 最后一场开始后永远算"当前"
   };
 }
+
+// 手动覆盖：override_id 有效（对应节目存在）则以它为当前节目，其后一个为下一节目
+export function resolveState(
+  programs: Program[],
+  now: Date,
+  overrideId: number | null | undefined,
+): CurrentNext {
+  if (overrideId) {
+    const sorted = [...programs].sort((a, b) => a.start_time.localeCompare(b.start_time));
+    const idx = sorted.findIndex((p) => p.id === overrideId);
+    if (idx >= 0) {
+      return { current: sorted[idx], next: sorted[idx + 1] ?? null };
+    }
+  }
+  return computeCurrentNext(programs, now);
+}

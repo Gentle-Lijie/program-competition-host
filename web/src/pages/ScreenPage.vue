@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue';
 import { api } from '@/lib/api';
-import { computeCurrentNext, type Program } from '@/lib/programState';
+import { resolveState, type Program } from '@/lib/programState';
 import { usePolling } from '@/composables/usePolling';
 import { useNow } from '@/composables/useNow';
 
 // 大屏唯一入口：基于 WONDERFUL_US.html 原版设计，动态呈现节目单（严格还原，背景固定原版）
 const programs = usePolling<Program[]>(() => api('/api/programs'), 10_000);
+const state = usePolling<{ override_id: number }>(() => api('/api/programs/state'), 5_000);
 
 const now = useNow();
 const currentId = computed(
-  () => computeCurrentNext(programs.data ?? [], now.value).current?.id ?? null,
+  () => resolveState(programs.data ?? [], now.value, state.data?.override_id).current?.id ?? null,
 );
 
 function hhmm(p: Program) {

@@ -76,3 +76,59 @@ function validate(r) {
   if (!r?.start_time || !TIME_RE.test(r.start_time)) errors.push('时间格式应为 YYYY-MM-DD HH:MM');
   return errors;
 }
+
+// ---------- 手动切换当前节目（current_override 指针，0 = 自动） ----------
+
+const SET_SETTING =
+  'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value';
+
+function getOverrideId() {
+  const row = db.prepare("SELECT value FROM settings WHERE key='current_override'").get();
+  const n = parseInt(row?.value, 10);
+  return Number.isInteger(n) && n > 0 ? n : 0;
+}
+
+// 当前节目下标：override 优先（指向的节目不存在则回落时间驱动），否则按服务器本地时间
+function computeCurrentIdx(list) {
+  const override = getOverrideId();
+  if (override) {
+    const idx = list.findIndex((p) => p.id === override);
+    if (idx >= 0) return idx;
+  }
+  const now = new Date().toLocaleString('sv-SE').slice(0, 16); // YYYY-MM-DD HH:MM
+  let cur = -1;
+  for (let i = 0; i < list.length; i++) {
+    if (list[i].start_time <= now) cur = i;
+    else break;
+  }
+  return cur;
+}
+
+programsRouter.get('/programs/state', (req, res) => {
+  res.json({ override_id: getOverrideId() });
+});
+
+programsRouter.post('/programs/current/advance', (req, res) => {
+  const list = db
+    .prepare('SELECT id FROM programs ORDER BY start_time ASC, id ASC')
+    .all();
+  if (!list.length) return res.json({ ok: false });
+  const next = list[Math.min(computeCurrentIdx(list) + 1, list.length - 1)];
+  db.prepare(SET_SETTING).run('current_override', String(next.id));
+  res.json({ ok: true, id: next.id });
+});
+
+programsRouter.post('/programs/current/back', (req, res) => {
+  const list = db
+    .prepare('SELECT id FROM programs ORDER BY start_time ASC, id ASC')
+    .all();
+  if (!list.length) return res.json({ ok: false });
+  const prev = list[Math.max(computeCurrentIdx(list) - 1, 0)];
+  db.prepare(SET_SETTING).run('current_override', String(prev.id));
+  res.json({ ok: true, id: prev.id });
+});
+
+programsRouter.delete('/programs/current/override', (req, res) => {
+  db.prepare("DELETE FROM settings WHERE key='current_override'").run();
+  res.json({ ok: true });
+});
