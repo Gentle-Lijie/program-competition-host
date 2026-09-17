@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { db } from '../db.js';
-import { rateLimit } from '../middleware/rateLimit.js';
 import { getCodeInfo } from '../codeRotation.js';
 
 export const checkinRouter = Router();
@@ -55,10 +54,8 @@ checkinRouter.get('/checkin/config', (req, res) => {
 });
 
 // 观众签到：错码/越界统一 403（不区分具体原因，减少撞码反馈）
-// 限速按出口 IP 计——校园网 NAT 下大量学生共享一个 IP，阈值必须放宽
-const limiter = rateLimit({ windowMs: 60_000, max: 600 });
-
-checkinRouter.post('/checkin', limiter, (req, res) => {
+// 不限速：校园网 NAT 共享出口 IP，限速必然误伤；防刷由签到码+重复检查+围栏承担
+checkinRouter.post('/checkin', (req, res) => {
   const { name, affiliation, code, lat, lng, device } = req.body || {};
   const expected = db.prepare("SELECT value FROM settings WHERE key='checkin_code'").get()?.value;
   const messages = getMessages();
