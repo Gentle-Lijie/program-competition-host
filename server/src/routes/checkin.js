@@ -55,7 +55,8 @@ checkinRouter.get('/checkin/config', (req, res) => {
 });
 
 // 观众签到：错码/越界统一 403（不区分具体原因，减少撞码反馈）
-const limiter = rateLimit({ windowMs: 60_000, max: 10 });
+// 限速按出口 IP 计——校园网 NAT 下大量学生共享一个 IP，阈值必须放宽
+const limiter = rateLimit({ windowMs: 60_000, max: 600 });
 
 checkinRouter.post('/checkin', limiter, (req, res) => {
   const { name, affiliation, code, lat, lng, device } = req.body || {};
