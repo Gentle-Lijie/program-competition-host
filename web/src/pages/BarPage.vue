@@ -27,7 +27,7 @@ function clock(d: Date): string {
       <div class="bar__clock">{{ clock(now) }}</div>
       <div class="bar__side">
         <span class="bar__label">当前节目</span>
-        <MarqueeText>{{ label(state.current) }}</MarqueeText>
+        <MarqueeText always>{{ label(state.current) }}</MarqueeText>
       </div>
       <div class="bar__divider"></div>
       <div class="bar__side">

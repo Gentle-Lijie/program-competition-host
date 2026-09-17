@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
-// 跑马灯：文字溢出才滚动，否则静止
+// 跑马灯：默认文字溢出才滚动；always 模式无论长短始终滚动
+const props = defineProps<{ always?: boolean }>();
+
 const container = ref<HTMLElement | null>(null);
 const inner = ref<HTMLElement | null>(null);
 const needsScroll = ref(false);
@@ -11,11 +13,13 @@ onMounted(() => {
     needsScroll.value = inner.value.scrollWidth > container.value.clientWidth + 4;
   }
 });
+
+const scrolling = computed(() => props.always || needsScroll.value);
 </script>
 
 <template>
   <div ref="container" class="marquee">
-    <span ref="inner" class="marquee__text" :class="{ 'marquee__text--scroll': needsScroll }">
+    <span ref="inner" class="marquee__text" :class="{ 'marquee__text--scroll': scrolling }">
       <slot />
     </span>
   </div>
