@@ -78,7 +78,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown));
       <div class="bar__divider"></div>
       <div class="bar__side">
         <span class="bar__label">下一节目</span>
-        <MarqueeText>{{ label(next) }}</MarqueeText>
+        <MarqueeText always>{{ label(next) }}</MarqueeText>
       </div>
     </div>
   </div>
