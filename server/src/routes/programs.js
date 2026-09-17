@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { db } from '../db.js';
-import { requireAdmin } from '../middleware/auth.js';
 
 export const programsRouter = Router();
 
@@ -16,7 +15,7 @@ programsRouter.get('/programs', (req, res) => {
 
 // ---- 以下为管理接口 ----
 
-programsRouter.post('/programs', requireAdmin, (req, res) => {
+programsRouter.post('/programs', (req, res) => {
   const { name, performer, start_time } = req.body || {};
   const errors = validate({ name, performer, start_time });
   if (errors.length) return res.status(400).json({ error: errors.join('；') });
@@ -27,7 +26,7 @@ programsRouter.post('/programs', requireAdmin, (req, res) => {
   res.status(201).json({ id: Number(info.lastInsertRowid) });
 });
 
-programsRouter.put('/programs/:id', requireAdmin, (req, res) => {
+programsRouter.put('/programs/:id', (req, res) => {
   const id = Number(req.params.id);
   const { name, performer, start_time } = req.body || {};
   const errors = validate({ name, performer, start_time });
@@ -40,14 +39,14 @@ programsRouter.put('/programs/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-programsRouter.delete('/programs/:id', requireAdmin, (req, res) => {
+programsRouter.delete('/programs/:id', (req, res) => {
   const info = db.prepare('DELETE FROM programs WHERE id=?').run(Number(req.params.id));
   if (info.changes === 0) return res.status(404).json({ error: '节目不存在' });
   res.json({ ok: true });
 });
 
 // CSV 批量导入：前端解析为 JSON 行提交，单事务
-programsRouter.post('/programs/batch', requireAdmin, (req, res) => {
+programsRouter.post('/programs/batch', (req, res) => {
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
   if (!rows.length) return res.status(400).json({ error: '没有可导入的行' });
 

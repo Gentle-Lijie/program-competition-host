@@ -17,7 +17,7 @@ const router = createRouter({
         { path: 'settings', component: () => import('@/pages/admin/SettingsPanel.vue') },
       ],
     },
-    { path: '/admin/login', name: 'admin-login', component: () => import('@/pages/admin/AdminLogin.vue') },
+    { path: '/admin/login', redirect: '/admin' },
   ],
 });
 

@@ -1,11 +1,9 @@
 import { Router } from 'express';
 import { db } from '../db.js';
-import { requireAdmin } from '../middleware/auth.js';
 
 // 表演者名单：全局「班级 → 学生（姓名、学号）」
 // 节目页按「节目.performer = 班级代码」匹配（支持复合班级），不做外键级联
 export const performersRouter = Router();
-performersRouter.use(requireAdmin);
 
 const nowStr = () => new Date().toLocaleString('sv-SE').slice(0, 19);
 

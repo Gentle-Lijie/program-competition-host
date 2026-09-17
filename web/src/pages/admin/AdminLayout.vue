@@ -1,31 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { api } from '@/lib/api';
-import { clearToken, getToken } from '@/lib/auth';
+import { useRoute } from 'vue-router';
 
-const router = useRouter();
 const route = useRoute();
-const authed = ref(false);
-
-onMounted(async () => {
-  if (!getToken()) {
-    router.replace('/admin/login');
-    return;
-  }
-  try {
-    await api('/api/admin/verify');
-    authed.value = true;
-  } catch {
-    clearToken();
-    router.replace('/admin/login');
-  }
-});
-
-function logout() {
-  clearToken();
-  router.replace('/admin/login');
-}
 
 const tabs = [
   { to: '/admin/programs', label: '节目管理' },
@@ -36,7 +12,7 @@ const tabs = [
 </script>
 
 <template>
-  <div v-if="authed" class="admin-layout">
+  <div class="admin-layout">
     <header class="admin-header">
       <h1 class="font-display text-2xl text-primary">WONDERFUL US · 后台</h1>
       <nav class="admin-nav">
@@ -54,7 +30,6 @@ const tabs = [
         <a href="/" target="_blank" class="admin-nav__link">大屏 ↗</a>
         <a href="/bar" target="_blank" class="admin-nav__link">提示栏 ↗</a>
         <a href="/checkin/screen" target="_blank" class="admin-nav__link">签到屏 ↗</a>
-        <button class="admin-nav__link admin-nav__link--logout" @click="logout">退出</button>
       </div>
     </header>
     <main class="admin-main">

@@ -1,14 +1,13 @@
 import { Router } from 'express';
 import { db } from '../db.js';
-import { requireAdmin } from '../middleware/auth.js';
 import { getCodeInfo, touchCode, getRotationSeconds } from '../codeRotation.js';
 import { getGeofence, getMessages } from './checkin.js';
 import { normalizeClassGroup } from './performers.js';
 
+// 管理接口：无鉴权（活动期间内网/受信环境使用）
 export const adminRouter = Router();
-adminRouter.use(requireAdmin);
 
-// token 校验（登录页用；use(requireAdmin) 已拦截无效 token）
+// 兼容旧前端的校验端点（始终通过）
 adminRouter.get('/verify', (req, res) => res.json({ ok: true }));
 
 // 节目列表（管理页用；附各节目名单进度——按「表演者=班级代码」匹配）
