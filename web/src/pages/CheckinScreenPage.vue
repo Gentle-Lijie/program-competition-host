@@ -99,7 +99,7 @@ body:has(.cs-page) {
   justify-content: center;
   gap: 3vh;
   background: transparent; /* OBS 浏览器源直接抠像合成 */
-  color: #faf6ef;
+  color: #1f2a16;
   padding: 4vh 4vw;
 }
 .cs-title {
@@ -108,7 +108,7 @@ body:has(.cs-page) {
   font-weight: 400;
   letter-spacing: 0.12em;
   margin: 0;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65); /* 透明背景下压任意底色保可读 */
+  color: #1f2a16; /* 黑字 */
 }
 .cs-qr-card {
   background: #fff;
