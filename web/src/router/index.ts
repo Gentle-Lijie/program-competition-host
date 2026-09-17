@@ -10,6 +10,7 @@ const router = createRouter({
     { path: '/admin', component: () => import('@/pages/admin/AdminLayout.vue'),
       children: [
         { path: '', redirect: '/admin/programs' },
+        { path: 'control', component: () => import('@/pages/admin/ControlPanel.vue') },
         { path: 'programs', component: () => import('@/pages/admin/ProgramsPanel.vue') },
         { path: 'arrived', component: () => import('@/pages/admin/ArrivedPanel.vue') },
         { path: 'arrived/:programId', component: () => import('@/pages/admin/ProgramRosterPage.vue') },

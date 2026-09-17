@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 
 const tabs = [
+  { to: '/admin/control', label: '切台控制' },
   { to: '/admin/programs', label: '节目管理' },
   { to: '/admin/arrived', label: '表演者签到' },
   { to: '/admin/checkins', label: '观众签到' },
