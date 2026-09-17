@@ -57,12 +57,25 @@ function fitRows() {
   });
 }
 
+// 自动滚动：当前高亮节目保持在面板垂直正中（当前节目变化或数据刷新时对齐）
+function scrollToCurrent() {
+  const container = document.querySelector<HTMLElement>('.rows');
+  const row = container?.querySelector<HTMLElement>('.row--current');
+  if (!container || !row) return;
+  const target = row.offsetTop - (container.clientHeight - row.offsetHeight) / 2;
+  container.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+}
+
 watch(() => programs.data, () => nextTick(fitRows));
+watch(currentId, () => nextTick(scrollToCurrent));
 onMounted(() => {
   fitRows();
   // 原版字体异步加载，加载完成前后各补测几次（回退字体与原版宽度不同）
   document.fonts?.ready.then(() => nextTick(fitRows));
-  [300, 1000, 2500].forEach((ms) => setTimeout(fitRows, ms));
+  [300, 1000, 2500].forEach((ms) => setTimeout(() => {
+    fitRows();
+    scrollToCurrent();
+  }, ms));
   window.addEventListener('resize', fitRows);
 });
 onBeforeUnmount(() => window.removeEventListener('resize', fitRows));
